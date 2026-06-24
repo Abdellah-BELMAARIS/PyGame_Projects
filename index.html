@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PyGame Web Arcade - A premium, high-fidelity portfolio of retro-modern PyGame classics compiled to WebAssembly.">
+    <meta name="keywords" content="pygame, python, webassembly, retro games, arcade, gaming, wasm">
+    <meta name="author" content="Abdellah Belmaaris">
+    <title>PyGame Web Arcade | Retro-Modern Classics</title>
+    
+    <!-- Google Fonts & Bootstrap Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Tailwind CSS CDN (Utility Styles) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        outfit: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        dark: {
+                            950: '#060814',
+                            900: '#0B0F24',
+                            800: '#141A3D',
+                            700: '#1E2656',
+                            600: '#2A3575',
+                        },
+                        neon: {
+                            blue: '#3B82F6',
+                            purple: '#A855F7',
+                            pink: '#EC4899',
+                            green: '#10B981',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Custom Premium Styles */
+        body {
+            background: radial-gradient(circle at 50% 0%, #0c133a 0%, #060814 70%);
+            overflow-x: hidden;
+        }
+        
+        .glass-card {
+            background: rgba(20, 26, 61, 0.4);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        .glass-card:hover {
+            border-color: rgba(59, 130, 246, 0.4);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.15);
+        }
+        
+        .neon-text-gradient {
+            background: linear-gradient(135deg, #3B82F6 0%, #A855F7 50%, #EC4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn-neon {
+            position: relative;
+            background: linear-gradient(135deg, #3B82F6 0%, #A855F7 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-neon::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(135deg, #3B82F6 0%, #A855F7 100%);
+            filter: blur(8px);
+            opacity: 0;
+            z-index: -1;
+            transition: opacity 0.3s ease;
+            border-radius: inherit;
+        }
+
+        .btn-neon:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-neon:hover::after {
+            opacity: 0.6;
+        }
+        
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #060814;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #141A3D;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #1E2656;
+        }
+    </style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans antialiased">
+
+    <!-- Header Section -->
+    <header class="border-b border-white/5 sticky top-0 bg-dark-950/80 backdrop-blur-md z-40">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="#" class="flex items-center space-x-3 group">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-neon-blue to-neon-purple flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform">
+                    <i class="bi bi-controller text-2xl text-white"></i>
+                </div>
+                <span class="font-outfit font-extrabold text-2xl tracking-wider text-white">PYGAME<span class="text-neon-blue">ARCADE</span></span>
+            </a>
+            
+            <div class="hidden md:flex items-center space-x-8 text-sm font-semibold">
+                <a href="#games" class="text-gray-300 hover:text-white transition-colors">Arcade Games</a>
+                <a href="#instructions" class="text-gray-300 hover:text-white transition-colors">How to Play</a>
+                <a href="#developer" class="text-gray-300 hover:text-white transition-colors">CLI Desktop Guide</a>
+            </div>
+            
+            <a href="https://github.com/Abdellah-BELMAARIS/PyGame_Projects" target="_blank" class="flex items-center space-x-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors">
+                <i class="bi bi-github"></i>
+                <span class="text-sm font-medium">Source Code</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="max-w-7xl mx-auto px-6 pt-16 pb-20 text-center relative">
+        <div class="absolute inset-0 flex items-center justify-center -z-10 opacity-20 pointer-events-none">
+            <div class="w-[500px] h-[500px] rounded-full bg-neon-purple/20 blur-[120px]"></div>
+            <div class="w-[400px] h-[400px] rounded-full bg-neon-blue/20 blur-[100px] -translate-x-24"></div>
+        </div>
+        
+        <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-neon-blue/10 border border-neon-blue/20 text-neon-blue text-xs font-semibold uppercase tracking-wider mb-8">
+            <i class="bi bi-fire"></i>
+            <span>Python WebAssembly Showcase</span>
+        </div>
+        
+        <h1 class="text-5xl md:text-7xl font-outfit font-extrabold tracking-tight mb-6 leading-tight">
+            Play PyGame Classics <br>
+            <span class="neon-text-gradient">Right in Your Browser</span>
+        </h1>
+        
+        <p class="max-w-2xl mx-auto text-gray-400 text-lg md:text-xl font-light leading-relaxed mb-12">
+            A premium collection of high-fidelity desktop games built in Python with <strong class="text-gray-200">PyGame</strong>, compiled to high-performance Wasm, and served as a unified web arcade portal.
+        </p>
+        
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a href="#games" class="btn-neon px-8 py-3.5 rounded-xl font-bold text-white shadow-lg w-full sm:w-auto">
+                <i class="bi bi-play-circle-fill mr-2"></i>Enter Arcade
+            </a>
+            <a href="#developer" class="px-8 py-3.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-bold text-gray-300 hover:text-white transition-all w-full sm:w-auto">
+                <i class="bi bi-terminal mr-2"></i>Developer CLI Guide
+            </a>
+        </div>
+    </section>
+
+    <!-- Games Grid Section -->
+    <section id="games" class="max-w-7xl mx-auto px-6 py-20 border-t border-white/5">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-4">
+            <div>
+                <h2 class="text-3xl font-outfit font-bold tracking-tight mb-2">The Retro Arcade Cabinet</h2>
+                <p class="text-gray-400">Select any title below to load the compiled Wasm package instantly.</p>
+            </div>
+            <div class="flex items-center space-x-3 text-xs bg-white/5 border border-white/10 px-4 py-2 rounded-xl">
+                <span class="flex h-2.5 w-2.5 relative">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-neon-green opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-neon-green"></span>
+                </span>
+                <span class="text-gray-300 font-semibold uppercase tracking-wider">8 Cabinet Slots Functional</span>
+            </div>
+        </div>
+        
+        <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            
+            <!-- Game 1: Space Shooter / Invader -->
+            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
+                <div>
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="w-12 h-12 rounded-xl bg-neon-purple/10 flex items-center justify-center border border-neon-purple/20 text-neon-purple text-2xl">
+                            <i class="bi bi-rocket-takeoff"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-md bg-neon-purple/10 text-neon-purple text-xs font-semibold uppercase">Shooter</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">Space Invader</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
+                        An intense space shooter. Fend off endless waves of alien warships, fire lasers, dodge attacks, and level up to survive.
+                    </p>
+                </div>
+                <div>
+                    <div class="border-t border-white/5 pt-4 mb-4 text-xs text-gray-500">
+                        <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
+                        Arrows (Move), Space (Shoot)
+                    </div>
+                    <button onclick="launchGame('Space Invader', './Space_invader/build/web/')" class="w-full py-3 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
+                        <i class="bi bi-play-fill text-lg"></i>Play Wasm Build
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game 2: Car Racing -->
+            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
+                <div>
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="w-12 h-12 rounded-xl bg-neon-green/10 flex items-center justify-center border border-neon-green/20 text-neon-green text-2xl">
+                            <i class="bi bi-car-front"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-md bg-neon-green/10 text-neon-green text-xs font-semibold uppercase">Racing</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">Car Racing</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
+                        Race against a high-performance computer car. Control steering, drift on track borders, and speed across the finish line.
+                    </p>
+                </div>
+                <div>
+                    <div class="border-t border-white/5 pt-4 mb-4 text-xs text-gray-500">
+                        <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
+                        Arrows (Steer & Drive), Enter (Restart Level)
+                    </div>
+                    <button onclick="launchGame('Car Racing', './Car_Racing/build/web/')" class="w-full py-3 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
+                        <i class="bi bi-play-fill text-lg"></i>Play Wasm Build
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game 3: Platformer -->
+            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
+                <div>
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="w-12 h-12 rounded-xl bg-neon-pink/10 flex items-center justify-center border border-neon-pink/20 text-neon-pink text-2xl">
+                            <i class="bi bi-joystick"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-md bg-neon-pink/10 text-neon-pink text-xs font-semibold uppercase">Platformer</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">Platformer</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
+                        A gorgeous 2D physics platformer. Run across dynamic terrains, double jump, and dodge fiery traps as Mask Dude.
+                    </p>
+                </div>
+                <div>
+                    <div class="border-t border-white/5 pt-4 mb-4 text-xs text-gray-500">
+                        <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
+                        Left/Right (Run), Space (Double Jump)
+                    </div>
+                    <button onclick="launchGame('Platformer', './Platformer/build/web/')" class="w-full py-3 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
+                        <i class="bi bi-play-fill text-lg"></i>Play Wasm Build
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game 4: Galaxy Fight -->
+            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
+                <div>
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="w-12 h-12 rounded-xl bg-neon-blue/10 flex items-center justify-center border border-neon-blue/20 text-neon-blue text-2xl">
+                            <i class="bi bi-shield-shaded"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-md bg-neon-blue/10 text-neon-blue text-xs font-semibold uppercase">Versus</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">Galaxy Fight</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
+                        A local 2-player spaceship battle. Dodge laser fire, navigate across the divider border, and destroy your opponent's shields.
+                    </p>
+                </div>
+                <div>
+                    <div class="border-t border-white/5 pt-4 mb-4 text-xs text-gray-500">
+                        <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
+                        P1: Q/D/Z/S (Move) + L-Ctrl (Shoot) | P2: Arrows + R-Ctrl
+                    </div>
+                    <button onclick="launchGame('Galaxy Fight', './Galaxy_Fight/build/web/')" class="w-full py-3 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
+                        <i class="bi bi-play-fill text-lg"></i>Play Wasm Build
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game 5: 2048 -->
+            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
+                <div>
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 text-amber-500 text-2xl">
+                            <i class="bi bi-grid-3x3"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-500 text-xs font-semibold uppercase">Puzzle</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">2048</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
+                        Slide tiles and merge matching numbers. Calculate moves to avoid grid locks, slide strategically, and unlock the legendary 2048 tile.
+                    </p>
+                </div>
+                <div>
+                    <div class="border-t border-white/5 pt-4 mb-4 text-xs text-gray-500">
+                        <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
+                        Arrows (Slide Tiles)
+                    </div>
+                    <button onclick="launchGame('2048', './2048/build/web/')" class="w-full py-3 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
+                        <i class="bi bi-play-fill text-lg"></i>Play Wasm Build
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game 6: Checkers -->
+            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
+                <div>
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center border border-red-500/20 text-red-500 text-2xl">
+                            <i class="bi bi-grid"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-md bg-red-500/10 text-red-500 text-xs font-semibold uppercase">Board</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">Checkers</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
+                        A classic two-player checkers game. Jump over opponent pieces, crown kings, and wipe out all enemy tokens to win.
+                    </p>
+                </div>
+                <div>
+                    <div class="border-t border-white/5 pt-4 mb-4 text-xs text-gray-500">
+                        <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-mouse mr-1"></i>Controls:</span>
+                        Mouse Clicks (Select and Move Pieces)
+                    </div>
+                    <button onclick="launchGame('Checkers', './checkers/build/web/')" class="w-full py-3 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
+                        <i class="bi bi-play-fill text-lg"></i>Play Wasm Build
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game 7: Pong -->
+            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
+                <div>
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="w-12 h-12 rounded-xl bg-teal-500/10 flex items-center justify-center border border-teal-500/20 text-teal-500 text-2xl">
+                            <i class="bi bi-activity"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-md bg-teal-500/10 text-teal-500 text-xs font-semibold uppercase">Retro</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">Pong</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
+                        The ultimate retro tennis showdown. Control your paddle, calculate bounce angles, and score 10 points to win.
+                    </p>
+                </div>
+                <div>
+                    <div class="border-t border-white/5 pt-4 mb-4 text-xs text-gray-500">
+                        <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
+                        Left: W/S (Up/Down) | Right: Up/Down Arrows
+                    </div>
+                    <button onclick="launchGame('Pong', './pong/build/web/')" class="w-full py-3 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
+                        <i class="bi bi-play-fill text-lg"></i>Play Wasm Build
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game 8: Space Dodge -->
+            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
+                <div>
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="w-12 h-12 rounded-xl bg-rose-500/10 flex items-center justify-center border border-rose-500/20 text-rose-500 text-2xl">
+                            <i class="bi bi-water"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-md bg-rose-500/10 text-rose-500 text-xs font-semibold uppercase">Survival</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">Space Dodge</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
+                        An addictive avoidance game. Dodge endless streams of falling meteor stars. The longer you survive, the higher your score.
+                    </p>
+                </div>
+                <div>
+                    <div class="border-t border-white/5 pt-4 mb-4 text-xs text-gray-500">
+                        <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
+                        Left / Right Arrows (Move Left/Right)
+                    </div>
+                    <button onclick="launchGame('Space Dodge', './Space_Dodge/build/web/')" class="w-full py-3 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
+                        <i class="bi bi-play-fill text-lg"></i>Play Wasm Build
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+    </section>
+
+    <!-- Gameplay Overlay Modal -->
+    <div id="gameplay-modal" class="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 md:p-6 bg-dark-950/90 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="w-full max-w-5xl bg-dark-900 border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[90vh]">
+            
+            <!-- Modal Toolbar -->
+            <div class="px-6 py-4 border-b border-white/5 bg-dark-950 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-3.5 h-3.5 rounded-full bg-neon-green animate-pulse"></div>
+                    <h3 id="modal-game-title" class="font-outfit font-bold text-lg text-white">Loading Game...</h3>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleFullscreen()" class="p-2 text-gray-400 hover:text-white transition-colors" title="Toggle Fullscreen">
+                        <i class="bi bi-fullscreen text-lg"></i>
+                    </button>
+                    <button onclick="closeGame()" class="p-2 text-gray-400 hover:text-white transition-colors" title="Exit Game">
+                        <i class="bi bi-x-lg text-lg"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Modal Body (Iframe) -->
+            <div class="flex-grow bg-black relative">
+                <!-- Loader Spinner -->
+                <div id="iframe-loader" class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-dark-900 z-10">
+                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-neon-blue"></div>
+                    <p class="text-sm text-gray-400 font-medium">Downloading WebAssembly packages...</p>
+                </div>
+                
+                <!-- The Iframe -->
+                <iframe id="gameplay-iframe" class="w-full h-full border-none opacity-0 transition-opacity duration-500" allow="autoplay; fullscreen; keyboard" src=""></iframe>
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="px-6 py-3 border-t border-white/5 bg-dark-950/50 flex flex-col sm:flex-row sm:justify-between sm:items-center text-xs text-gray-400 gap-2">
+                <span><i class="bi bi-info-circle mr-1"></i>WebAssembly runs completely locally in your browser.</span>
+                <span>Press <strong class="text-white bg-white/10 px-1.5 py-0.5 rounded">ESC</strong> inside the game window to free keyboard capture.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Desktop CLI Developer Guide Section -->
+    <section id="developer" class="max-w-7xl mx-auto px-6 py-20 border-t border-white/5">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+                <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-neon-purple/10 border border-neon-purple/20 text-neon-purple text-xs font-semibold uppercase tracking-wider mb-6">
+                    <i class="bi bi-terminal-fill"></i>
+                    <span>CLI Terminal Setup</span>
+                </div>
+                <h2 class="text-3xl font-outfit font-bold tracking-tight mb-4">Want to run them natively as desktop apps?</h2>
+                <p class="text-gray-400 leading-relaxed mb-6">
+                    This entire collection is structured as a professional, multi-project Python workspace. You can run all 8 games locally using standard python CLI commands.
+                </p>
+                <ul class="space-y-4 text-sm text-gray-300">
+                    <li class="flex items-start gap-3">
+                        <span class="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-xs border border-white/10 shrink-0 text-neon-blue font-bold">1</span>
+                        <span>Uses standard Python event pooling for extremely smooth desktop rendering.</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-xs border border-white/10 shrink-0 text-neon-blue font-bold">2</span>
+                        <span>Spawns isolated, lightweight OS processes (`subprocess.Popen`) from the central menu launcher.</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-xs border border-white/10 shrink-0 text-neon-blue font-bold">3</span>
+                        <span>Zero configuration needed: dependency packages are automatically resolved.</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="glass-card rounded-2xl p-6 md:p-8">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
+                    <h4 class="font-outfit font-bold text-white"><i class="bi bi-terminal mr-2"></i>Quickstart Desktop Commands</h4>
+                    <span class="text-xs text-gray-500">PowerShell / Bash</span>
+                </div>
+                
+                <div class="space-y-6 font-mono text-sm">
+                    <div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 mb-2">
+                            <span>1. Clone Repository</span>
+                            <button onclick="copyCommand('clone-cmd')" class="text-neon-blue hover:underline"><i class="bi bi-copy mr-1"></i>Copy</button>
+                        </div>
+                        <div id="clone-cmd" class="p-3.5 bg-black/40 border border-white/5 rounded-xl text-gray-300 overflow-x-auto whitespace-nowrap">
+                            git clone https://github.com/Abdellah-BELMAARIS/PyGame_Projects.git
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 mb-2">
+                            <span>2. Enter and Install PyGame</span>
+                            <button onclick="copyCommand('install-cmd')" class="text-neon-blue hover:underline"><i class="bi bi-copy mr-1"></i>Copy</button>
+                        </div>
+                        <div id="install-cmd" class="p-3.5 bg-black/40 border border-white/5 rounded-xl text-gray-300 overflow-x-auto whitespace-nowrap">
+                            cd PyGame_Projects ; pip install pygame
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 mb-2">
+                            <span>3. Start Arcade Launcher</span>
+                            <button onclick="copyCommand('run-cmd')" class="text-neon-blue hover:underline"><i class="bi bi-copy mr-1"></i>Copy</button>
+                        </div>
+                        <div id="run-cmd" class="p-3.5 bg-black/40 border border-white/5 rounded-xl text-gray-300 overflow-x-auto whitespace-nowrap">
+                            python main.py
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Section -->
+    <footer class="border-t border-white/5 bg-dark-950/50 py-12 text-center text-sm text-gray-500">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center space-x-2">
+                <i class="bi bi-controller text-neon-blue text-xl"></i>
+                <span class="font-outfit font-extrabold text-white">PYGAME<span class="text-neon-blue">ARCADE</span></span>
+            </div>
+            <p>© 2026. Designed and compiled by <a href="https://github.com/Abdellah-BELMAARIS" target="_blank" class="text-gray-400 hover:text-white underline">Abdellah Belmaaris</a>. Powered by Pygbag Wasm.</p>
+            <div class="flex space-x-4">
+                <a href="https://github.com/Abdellah-BELMAARIS" target="_blank" class="text-gray-400 hover:text-white text-lg"><i class="bi bi-github"></i></a>
+                <a href="https://www.linkedin.com/in/abdellah-belmaaris" target="_blank" class="text-gray-400 hover:text-white text-lg"><i class="bi bi-linkedin"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Gameplay Overlay JavaScript -->
+    <script>
+        const modal = document.getElementById('gameplay-modal');
+        const iframe = document.getElementById('gameplay-iframe');
+        const loader = document.getElementById('iframe-loader');
+        const titleText = document.getElementById('modal-game-title');
+        
+        function launchGame(name, buildPath) {
+            titleText.innerText = name + ' | Arcade Wasm Cabinet';
+            loader.style.display = 'flex';
+            iframe.style.opacity = '0';
+            
+            // Set the source of the iframe to load the game
+            iframe.src = buildPath + 'index.html';
+            
+            // Open modal
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.classList.add('opacity-100');
+            document.body.style.overflow = 'hidden';
+            
+            // Wait for iframe to load, then hide loader and fade in the game
+            iframe.onload = function() {
+                loader.style.display = 'none';
+                iframe.style.opacity = '1';
+                
+                // Focus the iframe to capture keys immediately
+                setTimeout(() => {
+                    iframe.contentWindow.focus();
+                }, 100);
+            };
+        }
+        
+        function closeGame() {
+            // Close modal
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            document.body.style.overflow = '';
+            
+            // Clear iframe source to stop sounds and free memory
+            iframe.src = '';
+        }
+        
+        function toggleFullscreen() {
+            if (iframe.requestFullscreen) {
+                iframe.requestFullscreen();
+            } else if (iframe.mozRequestFullScreen) { /* Firefox */
+                iframe.mozRequestFullScreen();
+            } else if (iframe.webkitRequestFullscreen) { /* Chrome, Safari & Opera */
+                iframe.webkitRequestFullscreen();
+            } else if (iframe.msRequestFullscreen) { /* IE/Edge */
+                iframe.msRequestFullscreen();
+            }
+        }
+        
+        function copyCommand(id) {
+            const cmd = document.getElementById(id).innerText;
+            navigator.clipboard.writeText(cmd).then(() => {
+                alert('Command copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+            });
+        }
+
+        // Close modal when pressing ESC outside iframe
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && !modal.classList.contains('pointer-events-none')) {
+                closeGame();
+            }
+        });
+    </script>
+</body>
+</html>
