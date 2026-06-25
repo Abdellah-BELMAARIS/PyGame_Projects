@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
-    <!-- Tailwind CSS CDN (Utility Styles) -->
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -37,6 +37,7 @@
                             purple: '#A855F7',
                             pink: '#EC4899',
                             green: '#10B981',
+                            orange: '#F97316',
                         }
                     }
                 }
@@ -45,22 +46,23 @@
     </script>
     
     <style>
-        /* Custom Premium Styles */
         body {
             background: radial-gradient(circle at 50% 0%, #0c133a 0%, #060814 70%);
             overflow-x: hidden;
         }
         
         .glass-card {
-            background: rgba(20, 26, 61, 0.4);
+            background: rgba(20, 26, 61, 0.45);
             backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         .glass-card:hover {
-            border-color: rgba(59, 130, 246, 0.4);
-            box-shadow: 0 0 30px rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.45);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.2);
+            transform: translateY(-4px);
         }
         
         .neon-text-gradient {
@@ -92,10 +94,9 @@
         }
 
         .btn-neon:hover::after {
-            opacity: 0.6;
+            opacity: 0.65;
         }
         
-        /* Custom scrollbars */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -116,7 +117,7 @@
     <!-- Header Section -->
     <header class="border-b border-white/5 sticky top-0 bg-dark-950/80 backdrop-blur-md z-40">
         <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="#" class="flex items-center space-x-3 group">
+            <a href="#" class="flex items-center space-x-3 group" onmouseover="playHoverSound()">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-neon-blue to-neon-purple flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform">
                     <i class="bi bi-controller text-2xl text-white"></i>
                 </div>
@@ -124,12 +125,13 @@
             </a>
             
             <div class="hidden md:flex items-center space-x-8 text-sm font-semibold">
-                <a href="#games" class="text-gray-300 hover:text-white transition-colors">Arcade Games</a>
-                <a href="#instructions" class="text-gray-300 hover:text-white transition-colors">How to Play</a>
-                <a href="#developer" class="text-gray-300 hover:text-white transition-colors">CLI Desktop Guide</a>
+                <a href="#dashboard" class="text-gray-300 hover:text-white transition-colors" onmouseover="playHoverSound()">My Dashboard</a>
+                <a href="#games" class="text-gray-300 hover:text-white transition-colors" onmouseover="playHoverSound()">Console Games</a>
+                <a href="#leaderboard" class="text-gray-300 hover:text-white transition-colors" onmouseover="playHoverSound()">Hall of Fame</a>
+                <a href="#developer" class="text-gray-300 hover:text-white transition-colors" onmouseover="playHoverSound()">Developer CLI</a>
             </div>
             
-            <a href="https://github.com/Abdellah-BELMAARIS/PyGame_Projects" target="_blank" class="flex items-center space-x-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors">
+            <a href="https://github.com/Abdellah-BELMAARIS/PyGame_Projects" target="_blank" class="flex items-center space-x-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors" onmouseover="playHoverSound()">
                 <i class="bi bi-github"></i>
                 <span class="text-sm font-medium">Source Code</span>
             </a>
@@ -137,313 +139,530 @@
     </header>
 
     <!-- Hero Section -->
-    <section class="max-w-7xl mx-auto px-6 pt-16 pb-20 text-center relative">
-        <div class="absolute inset-0 flex items-center justify-center -z-10 opacity-20 pointer-events-none">
+    <section class="max-w-7xl mx-auto px-6 pt-16 pb-12 text-center relative">
+        <div class="absolute inset-0 flex items-center justify-center -z-10 opacity-25 pointer-events-none">
             <div class="w-[500px] h-[500px] rounded-full bg-neon-purple/20 blur-[120px]"></div>
             <div class="w-[400px] h-[400px] rounded-full bg-neon-blue/20 blur-[100px] -translate-x-24"></div>
         </div>
         
         <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-neon-blue/10 border border-neon-blue/20 text-neon-blue text-xs font-semibold uppercase tracking-wider mb-8">
-            <i class="bi bi-fire"></i>
-            <span>Python WebAssembly Showcase</span>
+            <i class="bi bi-cpu-fill"></i>
+            <span>Professional Arcade Console Edition</span>
         </div>
         
         <h1 class="text-5xl md:text-7xl font-outfit font-extrabold tracking-tight mb-6 leading-tight">
-            Play PyGame Classics <br>
-            <span class="neon-text-gradient">Right in Your Browser</span>
+            Arcade Cabinet Matrix <br>
+            <span class="neon-text-gradient">15-in-1 Retro Console</span>
         </h1>
         
-        <p class="max-w-2xl mx-auto text-gray-400 text-lg md:text-xl font-light leading-relaxed mb-12">
-            A premium collection of high-fidelity desktop games built in Python with <strong class="text-gray-200">PyGame</strong>, compiled to high-performance Wasm, and served as a unified web arcade portal.
+        <p class="max-w-2xl mx-auto text-gray-400 text-lg md:text-xl font-light leading-relaxed mb-10">
+            A premium desktop-to-wasm game platform. 15 vectorized classics rebuilt in Python with high-fidelity particles, dynamic screen shakes, and served inside a web console deck.
         </p>
-        
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="#games" class="btn-neon px-8 py-3.5 rounded-xl font-bold text-white shadow-lg w-full sm:w-auto">
-                <i class="bi bi-play-circle-fill mr-2"></i>Enter Arcade
-            </a>
-            <a href="#developer" class="px-8 py-3.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-bold text-gray-300 hover:text-white transition-all w-full sm:w-auto">
-                <i class="bi bi-terminal mr-2"></i>Developer CLI Guide
-            </a>
+    </section>
+
+    <!-- Stats Dashboard Section -->
+    <section id="dashboard" class="max-w-7xl mx-auto px-6 mb-16">
+        <div class="glass-card rounded-2xl p-6 border border-white/10">
+            <div class="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
+                <h3 class="font-outfit font-bold text-lg text-white flex items-center gap-2">
+                    <i class="bi bi-speedometer2 text-neon-blue"></i>MY CABINET SYSTEM TELEMETRY
+                </h3>
+                <span class="text-xs uppercase tracking-wider text-neon-green font-semibold flex items-center gap-1.5">
+                    <span class="h-2 w-2 rounded-full bg-neon-green animate-pulse"></span>System Online
+                </span>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                <div class="p-4 bg-white/5 border border-white/5 rounded-xl">
+                    <span class="block text-xs text-gray-400 font-semibold mb-1 uppercase tracking-wider">Cores Aligned</span>
+                    <span id="stat-played" class="block font-outfit font-extrabold text-3xl text-neon-blue">0</span>
+                    <span class="text-[10px] text-gray-500 uppercase">Total Runs</span>
+                </div>
+                <div class="p-4 bg-white/5 border border-white/5 rounded-xl">
+                    <span class="block text-xs text-gray-400 font-semibold mb-1 uppercase tracking-wider">Roster Complete</span>
+                    <span id="stat-unlocked" class="block font-outfit font-extrabold text-3xl text-neon-purple">0/15</span>
+                    <span class="text-[10px] text-gray-500 uppercase">Games Tested</span>
+                </div>
+                <div class="p-4 bg-white/5 border border-white/5 rounded-xl">
+                    <span class="block text-xs text-gray-400 font-semibold mb-1 uppercase tracking-wider">Active Runtime</span>
+                    <span id="stat-time" class="block font-outfit font-extrabold text-3xl text-neon-pink">0s</span>
+                    <span class="text-[10px] text-gray-500 uppercase">Cabinet Loop</span>
+                </div>
+                <div class="p-4 bg-white/5 border border-white/5 rounded-xl">
+                    <span class="block text-xs text-gray-400 font-semibold mb-1 uppercase tracking-wider">Last Core Boot</span>
+                    <span id="stat-last" class="block font-outfit font-extrabold text-lg text-gold truncate pt-1.5">None</span>
+                    <span class="text-[10px] text-gray-500 uppercase">Game Title</span>
+                </div>
+            </div>
         </div>
     </section>
 
-    <!-- Games Grid Section -->
-    <section id="games" class="max-w-7xl mx-auto px-6 py-20 border-t border-white/5">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-4">
+    <!-- Games Console Deck -->
+    <section id="games" class="max-w-7xl mx-auto px-6 py-12 border-t border-white/5">
+        
+        <!-- Search & Filter Controls -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
             <div>
-                <h2 class="text-3xl font-outfit font-bold tracking-tight mb-2">The Retro Arcade Cabinet</h2>
-                <p class="text-gray-400">Select any title below to load the compiled Wasm package instantly.</p>
+                <h2 class="text-3xl font-outfit font-bold tracking-tight mb-2">Arcade Selection Deck</h2>
+                <p class="text-gray-400">Search by title or filter by combat sector category.</p>
             </div>
-            <div class="flex items-center space-x-3 text-xs bg-white/5 border border-white/10 px-4 py-2 rounded-xl">
-                <span class="flex h-2.5 w-2.5 relative">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-neon-green opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-neon-green"></span>
-                </span>
-                <span class="text-gray-300 font-semibold uppercase tracking-wider">10 Cabinet Slots Functional</span>
+            
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full md:w-auto">
+                <!-- Search Input -->
+                <div class="relative w-full sm:w-64">
+                    <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                    <input type="text" id="game-search" oninput="filterGames()" placeholder="Search Matrix..." class="w-full pl-10 pr-4 py-2.5 bg-dark-900 border border-white/10 rounded-xl text-sm focus:outline-none focus:border-neon-blue focus:ring-1 focus:ring-neon-blue text-white transition-all">
+                </div>
             </div>
         </div>
         
-        <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <!-- Category Filter Chips -->
+        <div class="flex flex-wrap gap-2.5 mb-10 pb-4 border-b border-white/5">
+            <button onclick="selectCategory('ALL')" class="cat-chip px-4 py-1.5 rounded-full text-xs font-bold uppercase border border-white/10 bg-white/5 text-white hover:border-neon-blue transition-colors">All Slots</button>
+            <button onclick="selectCategory('PUZZLE')" class="cat-chip px-4 py-1.5 rounded-full text-xs font-bold uppercase border border-white/10 text-gray-400 hover:text-white hover:border-neon-blue transition-colors">Puzzle</button>
+            <button onclick="selectCategory('SHOOTER')" class="cat-chip px-4 py-1.5 rounded-full text-xs font-bold uppercase border border-white/10 text-gray-400 hover:text-white hover:border-neon-blue transition-colors">Shooter</button>
+            <button onclick="selectCategory('SURVIVAL')" class="cat-chip px-4 py-1.5 rounded-full text-xs font-bold uppercase border border-white/10 text-gray-400 hover:text-white hover:border-neon-blue transition-colors">Survival</button>
+            <button onclick="selectCategory('RACING')" class="cat-chip px-4 py-1.5 rounded-full text-xs font-bold uppercase border border-white/10 text-gray-400 hover:text-white hover:border-neon-blue transition-colors">Racing</button>
+            <button onclick="selectCategory('ACTION')" class="cat-chip px-4 py-1.5 rounded-full text-xs font-bold uppercase border border-white/10 text-gray-400 hover:text-white hover:border-neon-blue transition-colors">Action</button>
+            <button onclick="selectCategory('RETRO')" class="cat-chip px-4 py-1.5 rounded-full text-xs font-bold uppercase border border-white/10 text-gray-400 hover:text-white hover:border-neon-blue transition-colors">Retro</button>
+            <button onclick="selectCategory('BOARD')" class="cat-chip px-4 py-1.5 rounded-full text-xs font-bold uppercase border border-white/10 text-gray-400 hover:text-white hover:border-neon-blue transition-colors">Board</button>
+            <button onclick="selectCategory('VERSUS')" class="cat-chip px-4 py-1.5 rounded-full text-xs font-bold uppercase border border-white/10 text-gray-400 hover:text-white hover:border-neon-blue transition-colors">Versus</button>
+        </div>
+
+        <!-- 15 Games Grid -->
+        <div id="games-grid" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             
             <!-- Game 1: Neon Tetris -->
-            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
+            <div class="game-card glass-card rounded-2xl p-5 flex flex-col justify-between" data-title="Neon Tetris" data-category="PUZZLE" onmouseover="playHoverSound()">
                 <div>
                     <div class="flex justify-between items-start mb-5">
-                        <div class="w-12 h-12 rounded-xl bg-neon-blue/10 flex items-center justify-center border border-neon-blue/20 text-neon-blue text-2xl">
+                        <div class="w-11 h-11 rounded-xl bg-neon-blue/10 flex items-center justify-center border border-neon-blue/20 text-neon-blue text-xl">
                             <i class="bi bi-bricks"></i>
                         </div>
-                        <span class="px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-500 text-xs font-semibold uppercase">Puzzle</span>
+                        <span class="px-2 py-0.5 rounded bg-neon-blue/10 border border-neon-blue/20 text-neon-blue text-[10px] font-bold uppercase tracking-wider">Puzzle</span>
                     </div>
-                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">Neon Tetris</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
+                    <h3 class="text-lg font-bold mb-1.5 text-white group-hover:text-neon-blue">Neon Tetris</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed mb-6">
                         The ultimate block puzzle remake. Fit falling neon blocks, align with the ghost projection, hold pieces, and clear rows with explosive particle bursts.
                     </p>
                 </div>
                 <div>
-                    <div class="border-t border-white/5 pt-4 mb-4 text-xs text-gray-500">
+                    <div class="border-t border-white/5 pt-4 mb-4 text-[10px] text-gray-500">
                         <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
                         Arrows (Move/Rotate), Space (Hard Drop), C/Shift (Hold)
                     </div>
-                    <button onclick="launchGame('Neon Tetris', './Tetris/build/web/')" class="w-full py-3 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
-                        <i class="bi bi-play-fill text-lg"></i>Play Wasm Build
+                    <button onclick="launchGame('Neon Tetris', './Tetris/build/web/')" class="w-full py-2.5 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                        <i class="bi bi-play-fill text-base"></i>Play Wasm Build
                     </button>
                 </div>
             </div>
 
-            <!-- Game 2: Space Shooter / Invader -->
-            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
+            <!-- Game 2: Space Invader -->
+            <div class="game-card glass-card rounded-2xl p-5 flex flex-col justify-between" data-title="Space Invader" data-category="SHOOTER" onmouseover="playHoverSound()">
                 <div>
                     <div class="flex justify-between items-start mb-5">
-                        <div class="w-12 h-12 rounded-xl bg-neon-purple/10 flex items-center justify-center border border-neon-purple/20 text-neon-purple text-2xl">
+                        <div class="w-11 h-11 rounded-xl bg-neon-purple/10 flex items-center justify-center border border-neon-purple/20 text-neon-purple text-xl">
                             <i class="bi bi-rocket-takeoff"></i>
                         </div>
-                        <span class="px-2.5 py-1 rounded-md bg-neon-purple/10 text-neon-purple text-xs font-semibold uppercase">Shooter</span>
+                        <span class="px-2 py-0.5 rounded bg-neon-purple/10 border border-neon-purple/20 text-neon-purple text-[10px] font-bold uppercase tracking-wider">Shooter</span>
                     </div>
-                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">Space Invader</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
-                        An intense space shooter. Fend off endless waves of alien warships, fire lasers, dodge attacks, and level up to survive.
+                    <h3 class="text-lg font-bold mb-1.5 text-white">Space Invader</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed mb-6">
+                        Classic shoot-'em-up shooter. Lead your glowing fighter against descending alien warships, fire yellow laser bolts, and dodge incoming energy beams.
                     </p>
                 </div>
                 <div>
-                    <div class="border-t border-white/5 pt-4 mb-4 text-xs text-gray-500">
+                    <div class="border-t border-white/5 pt-4 mb-4 text-[10px] text-gray-500">
                         <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
-                        Arrows (Move), Space (Shoot)
+                        Arrows (Move Ship), Space (Fire Laser Bolts)
                     </div>
-                    <button onclick="launchGame('Space Invader', './Space_invader/build/web/')" class="w-full py-3 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
-                        <i class="bi bi-play-fill text-lg"></i>Play Wasm Build
+                    <button onclick="launchGame('Space Invader', './Space_invader/build/web/')" class="w-full py-2.5 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                        <i class="bi bi-play-fill text-base"></i>Play Wasm Build
                     </button>
                 </div>
             </div>
 
             <!-- Game 3: Car Racing -->
-            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
+            <div class="game-card glass-card rounded-2xl p-5 flex flex-col justify-between" data-title="Car Racing" data-category="RACING" onmouseover="playHoverSound()">
                 <div>
                     <div class="flex justify-between items-start mb-5">
-                        <div class="w-12 h-12 rounded-xl bg-neon-green/10 flex items-center justify-center border border-neon-green/20 text-neon-green text-2xl">
+                        <div class="w-11 h-11 rounded-xl bg-neon-green/10 flex items-center justify-center border border-neon-green/20 text-neon-green text-xl">
                             <i class="bi bi-car-front"></i>
                         </div>
-                        <span class="px-2.5 py-1 rounded-md bg-neon-green/10 text-neon-green text-xs font-semibold uppercase">Racing</span>
+                        <span class="px-2 py-0.5 rounded bg-neon-green/10 border border-neon-green/20 text-neon-green text-[10px] font-bold uppercase tracking-wider">Racing</span>
                     </div>
-                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">Car Racing</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
-                        Race against a high-performance computer car. Control steering, drift on track borders, and speed across the finish line.
+                    <h3 class="text-lg font-bold mb-1.5 text-white">Car Racing</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed mb-6">
+                        Neon track velocity showdown. Control drifts, leave tyre sparks, bounce off border masks, and cross the finish line before the smart computer car.
                     </p>
                 </div>
                 <div>
-                    <div class="border-t border-white/5 pt-4 mb-4 text-xs text-gray-500">
+                    <div class="border-t border-white/5 pt-4 mb-4 text-[10px] text-gray-500">
                         <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
-                        Arrows (Steer & Drive), Enter (Restart Level)
+                        Arrows or WASD (Steer/Drive/Accelerate)
                     </div>
-                    <button onclick="launchGame('Car Racing', './Car_Racing/build/web/')" class="w-full py-3 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
-                        <i class="bi bi-play-fill text-lg"></i>Play Wasm Build
+                    <button onclick="launchGame('Car Racing', './Car_Racing/build/web/')" class="w-full py-2.5 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                        <i class="bi bi-play-fill text-base"></i>Play Wasm Build
                     </button>
                 </div>
             </div>
 
             <!-- Game 4: Platformer -->
-            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
+            <div class="game-card glass-card rounded-2xl p-5 flex flex-col justify-between" data-title="Platformer" data-category="ACTION" onmouseover="playHoverSound()">
                 <div>
                     <div class="flex justify-between items-start mb-5">
-                        <div class="w-12 h-12 rounded-xl bg-neon-pink/10 flex items-center justify-center border border-neon-pink/20 text-neon-pink text-2xl">
+                        <div class="w-11 h-11 rounded-xl bg-neon-pink/10 flex items-center justify-center border border-neon-pink/20 text-neon-pink text-xl">
                             <i class="bi bi-joystick"></i>
                         </div>
-                        <span class="px-2.5 py-1 rounded-md bg-neon-pink/10 text-neon-pink text-xs font-semibold uppercase">Platformer</span>
+                        <span class="px-2 py-0.5 rounded bg-neon-pink/10 border border-neon-pink/20 text-neon-pink text-[10px] font-bold uppercase tracking-wider">Action</span>
                     </div>
-                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">Platformer</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
-                        A gorgeous 2D physics platformer. Run across dynamic terrains, double jump, and dodge fiery traps as Mask Dude.
+                    <h3 class="text-lg font-bold mb-1.5 text-white">Platformer</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed mb-6">
+                        A gorgeous 2D physics platformer. Perform double jumps, emit dust trails, dodge glowing fire traps, and manage cores status to clear the stage.
                     </p>
                 </div>
                 <div>
-                    <div class="border-t border-white/5 pt-4 mb-4 text-xs text-gray-500">
+                    <div class="border-t border-white/5 pt-4 mb-4 text-[10px] text-gray-500">
                         <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
-                        Left/Right (Run), Space (Double Jump)
+                        Arrows / AD (Move), Space / UP (Double Jump)
                     </div>
-                    <button onclick="launchGame('Platformer', './Platformer/build/web/')" class="w-full py-3 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
-                        <i class="bi bi-play-fill text-lg"></i>Play Wasm Build
+                    <button onclick="launchGame('Platformer', './Platformer/build/web/')" class="w-full py-2.5 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                        <i class="bi bi-play-fill text-base"></i>Play Wasm Build
                     </button>
                 </div>
             </div>
 
             <!-- Game 5: Galaxy Fight -->
-            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
+            <div class="game-card glass-card rounded-2xl p-5 flex flex-col justify-between" data-title="Galaxy Fight" data-category="VERSUS" onmouseover="playHoverSound()">
                 <div>
                     <div class="flex justify-between items-start mb-5">
-                        <div class="w-12 h-12 rounded-xl bg-neon-blue/10 flex items-center justify-center border border-neon-blue/20 text-neon-blue text-2xl">
+                        <div class="w-11 h-11 rounded-xl bg-neon-blue/10 flex items-center justify-center border border-neon-blue/20 text-neon-blue text-xl">
                             <i class="bi bi-shield-shaded"></i>
                         </div>
-                        <span class="px-2.5 py-1 rounded-md bg-neon-blue/10 text-neon-blue text-xs font-semibold uppercase">Versus</span>
+                        <span class="px-2 py-0.5 rounded bg-neon-blue/10 border border-neon-blue/20 text-neon-blue text-[10px] font-bold uppercase tracking-wider">Versus</span>
                     </div>
-                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">Galaxy Fight</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
-                        A local 2-player spaceship battle. Dodge laser fire, navigate across the divider border, and destroy your opponent's shields.
+                    <h3 class="text-lg font-bold mb-1.5 text-white">Galaxy Fight</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed mb-6">
+                        Local 2-player spaceship battle. Navigate across the glowing divider laser fence, dodge bullet zaps, and deplete your opponent's shields.
                     </p>
                 </div>
                 <div>
-                    <div class="border-t border-white/5 pt-4 mb-4 text-xs text-gray-500">
+                    <div class="border-t border-white/5 pt-4 mb-4 text-[10px] text-gray-500">
                         <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
-                        P1: Q/D/Z/S (Move) + L-Ctrl (Shoot) | P2: Arrows + R-Ctrl
+                        P1: WASD + L-Ctrl | P2: Arrows + R-Ctrl (Shoot)
                     </div>
-                    <button onclick="launchGame('Galaxy Fight', './Galaxy_Fight/build/web/')" class="w-full py-3 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
-                        <i class="bi bi-play-fill text-lg"></i>Play Wasm Build
+                    <button onclick="launchGame('Galaxy Fight', './Galaxy_Fight/build/web/')" class="w-full py-2.5 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                        <i class="bi bi-play-fill text-base"></i>Play Wasm Build
                     </button>
                 </div>
             </div>
 
             <!-- Game 6: Snake -->
-            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
+            <div class="game-card glass-card rounded-2xl p-5 flex flex-col justify-between" data-title="Snake" data-category="RETRO" onmouseover="playHoverSound()">
                 <div>
                     <div class="flex justify-between items-start mb-5">
-                        <div class="w-12 h-12 rounded-xl bg-neon-green/10 flex items-center justify-center border border-neon-green/20 text-neon-green text-2xl">
+                        <div class="w-11 h-11 rounded-xl bg-neon-green/10 flex items-center justify-center border border-neon-green/20 text-neon-green text-xl">
                             <i class="bi bi-apple"></i>
                         </div>
-                        <span class="px-2.5 py-1 rounded-md bg-neon-green/10 text-neon-green text-xs font-semibold uppercase">Retro</span>
+                        <span class="px-2 py-0.5 rounded bg-neon-green/10 border border-neon-green/20 text-neon-green text-[10px] font-bold uppercase tracking-wider">Retro</span>
                     </div>
-                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">Snake</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
-                        Neon-themed retro snake. Gobble glowing fruit pellets, grow your neon tail, and navigate at high speeds without hitting borders or yourself.
+                    <h3 class="text-lg font-bold mb-1.5 text-white">Snake</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed mb-6">
+                        Neon-themed retro snake. Munch glowing fruit pellets, grow your neon tail, emit sparkles, and steer at high speeds without hitting borders or yourself.
                     </p>
                 </div>
                 <div>
-                    <div class="border-t border-white/5 pt-4 mb-4 text-xs text-gray-500">
+                    <div class="border-t border-white/5 pt-4 mb-4 text-[10px] text-gray-500">
                         <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
-                        Arrows or WASD (Move), R (Replay on Game Over)
+                        Arrows or WASD (Change Heading Direction)
                     </div>
-                    <button onclick="launchGame('Snake', './snake/build/web/')" class="w-full py-3 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
-                        <i class="bi bi-play-fill text-lg"></i>Play Wasm Build
+                    <button onclick="launchGame('Snake', './snake/build/web/')" class="w-full py-2.5 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                        <i class="bi bi-play-fill text-base"></i>Play Wasm Build
                     </button>
                 </div>
             </div>
 
             <!-- Game 7: 2048 -->
-            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
+            <div class="game-card glass-card rounded-2xl p-5 flex flex-col justify-between" data-title="2048" data-category="PUZZLE" onmouseover="playHoverSound()">
                 <div>
                     <div class="flex justify-between items-start mb-5">
-                        <div class="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 text-amber-500 text-2xl">
+                        <div class="w-11 h-11 rounded-xl bg-neon-orange/10 flex items-center justify-center border border-neon-orange/20 text-neon-orange text-xl">
                             <i class="bi bi-grid-3x3"></i>
                         </div>
-                        <span class="px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-500 text-xs font-semibold uppercase">Puzzle</span>
+                        <span class="px-2 py-0.5 rounded bg-neon-orange/10 border border-neon-orange/20 text-neon-orange text-[10px] font-bold uppercase tracking-wider">Puzzle</span>
                     </div>
-                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">2048</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
-                        Slide tiles and merge matching numbers. Calculate moves to avoid grid locks, slide strategically, and unlock the legendary 2048 tile.
+                    <h3 class="text-lg font-bold mb-1.5 text-white">2048</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed mb-6">
+                        Neon-glowing cyberpunk 2048. Slide glossy tiles, watch them merge in particle bursts, score combos, and trigger proportional screen shakes.
                     </p>
                 </div>
                 <div>
-                    <div class="border-t border-white/5 pt-4 mb-4 text-xs text-gray-500">
+                    <div class="border-t border-white/5 pt-4 mb-4 text-[10px] text-gray-500">
                         <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
-                        Arrows (Slide Tiles)
+                        Arrows / WASD (Slide Glowing Tiles in 4 directions)
                     </div>
-                    <button onclick="launchGame('2048', './2048/build/web/')" class="w-full py-3 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
-                        <i class="bi bi-play-fill text-lg"></i>Play Wasm Build
+                    <button onclick="launchGame('2048', './2048/build/web/')" class="w-full py-2.5 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                        <i class="bi bi-play-fill text-base"></i>Play Wasm Build
                     </button>
                 </div>
             </div>
 
             <!-- Game 8: Checkers -->
-            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
+            <div class="game-card glass-card rounded-2xl p-5 flex flex-col justify-between" data-title="Checkers" data-category="BOARD" onmouseover="playHoverSound()">
                 <div>
                     <div class="flex justify-between items-start mb-5">
-                        <div class="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center border border-red-500/20 text-red-500 text-2xl">
+                        <div class="w-11 h-11 rounded-xl bg-neon-pink/10 flex items-center justify-center border border-neon-pink/20 text-neon-pink text-xl">
                             <i class="bi bi-grid"></i>
                         </div>
-                        <span class="px-2.5 py-1 rounded-md bg-red-500/10 text-red-500 text-xs font-semibold uppercase">Board</span>
+                        <span class="px-2 py-0.5 rounded bg-neon-pink/10 border border-neon-pink/20 text-neon-pink text-[10px] font-bold uppercase tracking-wider">Board</span>
                     </div>
-                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">Checkers</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
-                        A classic two-player checkers game. Jump over opponent pieces, crown kings, and wipe out all enemy tokens to win.
+                    <h3 class="text-lg font-bold mb-1.5 text-white">Checkers</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed mb-6">
+                        Cyber checkers strategy board. Highlight valid slots, select glossy discs with pulsing neon halos, crown kings, and trigger capture sparkles.
                     </p>
                 </div>
                 <div>
-                    <div class="border-t border-white/5 pt-4 mb-4 text-xs text-gray-500">
+                    <div class="border-t border-white/5 pt-4 mb-4 text-[10px] text-gray-500">
                         <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-mouse mr-1"></i>Controls:</span>
-                        Mouse Clicks (Select and Move Pieces)
+                        Left Mouse Clicks (Select Pieces and Move Targets)
                     </div>
-                    <button onclick="launchGame('Checkers', './checkers/build/web/')" class="w-full py-3 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
-                        <i class="bi bi-play-fill text-lg"></i>Play Wasm Build
+                    <button onclick="launchGame('Checkers', './checkers/build/web/')" class="w-full py-2.5 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                        <i class="bi bi-play-fill text-base"></i>Play Wasm Build
                     </button>
                 </div>
             </div>
 
             <!-- Game 9: Pong -->
-            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
+            <div class="game-card glass-card rounded-2xl p-5 flex flex-col justify-between" data-title="Pong" data-category="RETRO" onmouseover="playHoverSound()">
                 <div>
                     <div class="flex justify-between items-start mb-5">
-                        <div class="w-12 h-12 rounded-xl bg-teal-500/10 flex items-center justify-center border border-teal-500/20 text-teal-500 text-2xl">
+                        <div class="w-11 h-11 rounded-xl bg-neon-blue/10 flex items-center justify-center border border-neon-blue/20 text-neon-blue text-xl">
                             <i class="bi bi-activity"></i>
                         </div>
-                        <span class="px-2.5 py-1 rounded-md bg-teal-500/10 text-teal-500 text-xs font-semibold uppercase">Retro</span>
+                        <span class="px-2 py-0.5 rounded bg-neon-blue/10 border border-neon-blue/20 text-neon-blue text-[10px] font-bold uppercase tracking-wider">Retro</span>
                     </div>
-                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">Pong</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
-                        The ultimate retro tennis cyberpunk showdown. Control your glowing paddle, calculate bounce angles, and score 10 points to win.
+                    <h3 class="text-lg font-bold mb-1.5 text-white">Pong</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed mb-6">
+                        Cyberpunk neon Pong tennis. Control paddles, deflect glowing balls leaving particle paths, trigger shakes on scores, and win at 10 points.
                     </p>
                 </div>
                 <div>
-                    <div class="border-t border-white/5 pt-4 mb-4 text-xs text-gray-500">
+                    <div class="border-t border-white/5 pt-4 mb-4 text-[10px] text-gray-500">
                         <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
-                        Left: W/S (Up/Down) | Right: Up/Down Arrows
+                        Left Paddle: W / S Keys | Right Paddle: UP / DOWN
                     </div>
-                    <button onclick="launchGame('Pong', './pong/build/web/')" class="w-full py-3 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
-                        <i class="bi bi-play-fill text-lg"></i>Play Wasm Build
+                    <button onclick="launchGame('Pong', './pong/build/web/')" class="w-full py-2.5 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                        <i class="bi bi-play-fill text-base"></i>Play Wasm Build
                     </button>
                 </div>
             </div>
 
             <!-- Game 10: Space Dodge -->
-            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
+            <div class="game-card glass-card rounded-2xl p-5 flex flex-col justify-between" data-title="Space Dodge" data-category="SURVIVAL" onmouseover="playHoverSound()">
                 <div>
                     <div class="flex justify-between items-start mb-5">
-                        <div class="w-12 h-12 rounded-xl bg-rose-500/10 flex items-center justify-center border border-rose-500/20 text-rose-500 text-2xl">
+                        <div class="w-11 h-11 rounded-xl bg-neon-pink/10 flex items-center justify-center border border-neon-pink/20 text-neon-pink text-xl">
                             <i class="bi bi-water"></i>
                         </div>
-                        <span class="px-2.5 py-1 rounded-md bg-rose-500/10 text-rose-500 text-xs font-semibold uppercase">Survival</span>
+                        <span class="px-2 py-0.5 rounded bg-neon-pink/10 border border-neon-pink/20 text-neon-pink text-[10px] font-bold uppercase tracking-wider">Survival</span>
                     </div>
-                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">Space Dodge</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
-                        An addictive avoidance game. Dodge endless streams of falling glowing orange meteorites. The longer you survive, the higher your score.
+                    <h3 class="text-lg font-bold mb-1.5 text-white">Space Dodge</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed mb-6">
+                        Sleek space dodger. Steer a vector spaceship, dodge orange meteorites falling in dynamic orbits, leave exhaust trails, and trigger debris on hits.
                     </p>
                 </div>
                 <div>
-                    <div class="border-t border-white/5 pt-4 mb-4 text-xs text-gray-500">
+                    <div class="border-t border-white/5 pt-4 mb-4 text-[10px] text-gray-500">
                         <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
-                        Left / Right Arrows or A / D keys
+                        Left / Right Arrows or A / D keys (Steer Ship)
                     </div>
-                    <button onclick="launchGame('Space Dodge', './Space_Dodge/build/web/')" class="w-full py-3 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
-                        <i class="bi bi-play-fill text-lg"></i>Play Wasm Build
+                    <button onclick="launchGame('Space Dodge', './Space_Dodge/build/web/')" class="w-full py-2.5 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                        <i class="bi bi-play-fill text-base"></i>Play Wasm Build
                     </button>
                 </div>
             </div>
+
+            <!-- Game 11: Neon Asteroids -->
+            <div class="game-card glass-card rounded-2xl p-5 flex flex-col justify-between" data-title="Neon Asteroids" data-category="SURVIVAL" onmouseover="playHoverSound()">
+                <div>
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="w-11 h-11 rounded-xl bg-neon-green/10 flex items-center justify-center border border-neon-green/20 text-neon-green text-xl">
+                            <i class="bi bi-rocket-takeoff"></i>
+                        </div>
+                        <span class="px-2 py-0.5 rounded bg-neon-green/10 border border-neon-green/20 text-neon-green text-[10px] font-bold uppercase tracking-wider">Survival</span>
+                    </div>
+                    <h3 class="text-lg font-bold mb-1.5 text-white">Neon Asteroids</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed mb-6">
+                        Jagged vector space simulator. Blast giant radioactive asteroids that shatter into smaller fragments, manage shields, and dodge high speed impacts.
+                    </p>
+                </div>
+                <div>
+                    <div class="border-t border-white/5 pt-4 mb-4 text-[10px] text-gray-500">
+                        <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
+                        UP (Thrust), Left/Right (Rotate), Space (Fire Laser)
+                    </div>
+                    <button onclick="launchGame('Neon Asteroids', './Asteroids/build/web/')" class="w-full py-2.5 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                        <i class="bi bi-play-fill text-base"></i>Play Wasm Build
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game 12: Neon Pacman -->
+            <div class="game-card glass-card rounded-2xl p-5 flex flex-col justify-between" data-title="Neon Pac-Man Pacman Pac-man" data-category="RETRO" onmouseover="playHoverSound()">
+                <div>
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="w-11 h-11 rounded-xl bg-neon-purple/10 flex items-center justify-center border border-neon-purple/20 text-neon-purple text-xl">
+                            <i class="bi bi-circle-half"></i>
+                        </div>
+                        <span class="px-2 py-0.5 rounded bg-neon-purple/10 border border-neon-purple/20 text-neon-purple text-[10px] font-bold uppercase tracking-wider">Retro</span>
+                    </div>
+                    <h3 class="text-lg font-bold mb-1.5 text-white">Neon Pac-Man</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed mb-6">
+                        Classic maze eating puzzle. Gobble pellets on a glowing blue grid maze, avoid colorful AI ghosts, and eat power pills to trigger counter hunts.
+                    </p>
+                </div>
+                <div>
+                    <div class="border-t border-white/5 pt-4 mb-4 text-[10px] text-gray-500">
+                        <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
+                        Arrows or WASD keys (Turn Heading Direction)
+                    </div>
+                    <button onclick="launchGame('Neon Pac-Man', './Pacman/build/web/')" class="w-full py-2.5 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                        <i class="bi bi-play-fill text-base"></i>Play Wasm Build
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game 13: Flappy Neon -->
+            <div class="game-card glass-card rounded-2xl p-5 flex flex-col justify-between" data-title="Flappy Neon" data-category="ACTION" onmouseover="playHoverSound()">
+                <div>
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="w-11 h-11 rounded-xl bg-neon-pink/10 flex items-center justify-center border border-neon-pink/20 text-neon-pink text-xl">
+                            <i class="bi bi-cursor-fill"></i>
+                        </div>
+                        <span class="px-2 py-0.5 rounded bg-neon-pink/10 border border-neon-pink/20 text-neon-pink text-[10px] font-bold uppercase tracking-wider">Action</span>
+                    </div>
+                    <h3 class="text-lg font-bold mb-1.5 text-white">Flappy Neon</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed mb-6">
+                        High speed tap avoidance. Guide a vector neon bird through scrolling gate obstacles, emit particle trailing sparks, and test your split-second reflexes.
+                    </p>
+                </div>
+                <div>
+                    <div class="border-t border-white/5 pt-4 mb-4 text-[10px] text-gray-500">
+                        <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
+                        Space / UP Key or Left Mouse Click (Flap Wing)
+                    </div>
+                    <button onclick="launchGame('Flappy Neon', './Flappy/build/web/')" class="w-full py-2.5 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                        <i class="bi bi-play-fill text-base"></i>Play Wasm Build
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game 14: Neon Lander -->
+            <div class="game-card glass-card rounded-2xl p-5 flex flex-col justify-between" data-title="Neon Lander" data-category="SURVIVAL" onmouseover="playHoverSound()">
+                <div>
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="w-11 h-11 rounded-xl bg-neon-blue/10 flex items-center justify-center border border-neon-blue/20 text-neon-blue text-xl">
+                            <i class="bi bi-box-arrow-down"></i>
+                        </div>
+                        <span class="px-2 py-0.5 rounded bg-neon-blue/10 border border-neon-blue/20 text-neon-blue text-[10px] font-bold uppercase tracking-wider">Survival</span>
+                    </div>
+                    <h3 class="text-lg font-bold mb-1.5 text-white">Neon Lander</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed mb-6">
+                        Physics gravity lander. Burn fuel thrusters to slow your descent, balance roll angle, and perform soft touchdowns on glowing cyan landing pads.
+                    </p>
+                </div>
+                <div>
+                    <div class="border-t border-white/5 pt-4 mb-4 text-[10px] text-gray-500">
+                        <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
+                        UP (Thrust), Left/Right (Rotate Capsule)
+                    </div>
+                    <button onclick="launchGame('Neon Lander', './Lander/build/web/')" class="w-full py-2.5 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                        <i class="bi bi-play-fill text-base"></i>Play Wasm Build
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game 15: Neon Minesweeper -->
+            <div class="game-card glass-card rounded-2xl p-5 flex flex-col justify-between" data-title="Neon Minesweeper" data-category="PUZZLE" onmouseover="playHoverSound()">
+                <div>
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="w-11 h-11 rounded-xl bg-neon-orange/10 flex items-center justify-center border border-neon-orange/20 text-neon-orange text-xl">
+                            <i class="bi bi-shield-slash"></i>
+                        </div>
+                        <span class="px-2 py-0.5 rounded bg-neon-orange/10 border border-neon-orange/20 text-neon-orange text-[10px] font-bold uppercase tracking-wider">Puzzle</span>
+                    </div>
+                    <h3 class="text-lg font-bold mb-1.5 text-white">Neon Minesweeper</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed mb-6">
+                        Tactical hazard sweeps. Identify hidden mine cells on a glowing 10x10 matrix, flag danger zones, and perform safe sweeps in particle sparks.
+                    </p>
+                </div>
+                <div>
+                    <div class="border-t border-white/5 pt-4 mb-4 text-[10px] text-gray-500">
+                        <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-mouse mr-1"></i>Controls:</span>
+                        Left Click (Reveal Cell), Right Click (Flag Mine)
+                    </div>
+                    <button onclick="launchGame('Neon Minesweeper', './Minesweeper/build/web/')" class="w-full py-2.5 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                        <i class="bi bi-play-fill text-base"></i>Play Wasm Build
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Hall of Fame (Leaderboard Mockup) -->
+    <section id="leaderboard" class="max-w-7xl mx-auto px-6 py-20 border-t border-white/5">
+        <div class="grid md:grid-cols-3 gap-12 items-start">
+            <div class="md:col-span-1">
+                <div class="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-neon-purple/10 border border-neon-purple/20 text-neon-purple text-xs font-semibold uppercase tracking-wider mb-6">
+                    <i class="bi bi-trophy-fill"></i>
+                    <span>Arcade Records</span>
+                </div>
+                <h2 class="text-3xl font-outfit font-bold tracking-tight mb-4">Hall of Fame</h2>
+                <p class="text-gray-400 leading-relaxed">
+                    The highest score coordinates submitted from both desktop cabinets and web emulators across the global matrix network.
+                </p>
+            </div>
             
+            <div class="md:col-span-2 glass-card rounded-2xl p-6 md:p-8">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
+                    <h4 class="font-outfit font-bold text-white"><i class="bi bi-list-ol mr-2 text-neon-blue"></i>Global Core Records</h4>
+                    <span class="text-xs text-gray-500">Updated Real-Time</span>
+                </div>
+                
+                <div class="space-y-4 font-mono text-sm">
+                    <div class="flex justify-between items-center p-3 bg-white/5 border border-white/5 rounded-xl">
+                        <span class="text-neon-blue font-bold">#01 <span class="text-white ml-3 font-semibold">ABDELLEH</span></span>
+                        <span class="text-gold font-bold">2,048,000 pts <span class="text-gray-500 ml-4 text-xs">2048</span></span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-white/5 border border-white/5 rounded-xl">
+                        <span class="text-neon-purple font-bold">#02 <span class="text-white ml-3 font-semibold">NEON_PILOT</span></span>
+                        <span class="text-gray-300 font-bold">948,100 pts <span class="text-gray-500 ml-4 text-xs">Asteroids</span></span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-white/5 border border-white/5 rounded-xl">
+                        <span class="text-neon-pink font-bold">#03 <span class="text-white ml-3 font-semibold">RETRO_KING</span></span>
+                        <span class="text-gray-300 font-bold">840,200 pts <span class="text-gray-500 ml-4 text-xs">Pac-Man</span></span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-white/5 border border-white/5 rounded-xl">
+                        <span class="text-gray-500 font-bold">#04 <span class="text-white ml-3 font-semibold">CPU_MATRIX</span></span>
+                        <span class="text-gray-300 font-bold">750,000 pts <span class="text-gray-500 ml-4 text-xs">Tetris</span></span>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
     <!-- Gameplay Overlay Modal -->
     <div id="gameplay-modal" class="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 md:p-6 bg-dark-950/90 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300">
-        <div class="w-full max-w-5xl bg-dark-900 border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[90vh]">
+        <!-- The Bezel Cabinet container -->
+        <div class="w-full max-w-5xl bg-dark-900 border-4 border-neon-blue rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(59,130,246,0.5)] flex flex-col h-[90vh] relative">
             
+            <!-- Side Bezel panels (decorative neon strips) -->
+            <div class="absolute left-0 top-12 bottom-12 w-2 bg-gradient-to-b from-neon-blue via-neon-purple to-neon-pink shadow-lg"></div>
+            <div class="absolute right-0 top-12 bottom-12 w-2 bg-gradient-to-b from-neon-blue via-neon-purple to-neon-pink shadow-lg"></div>
+
             <!-- Modal Toolbar -->
-            <div class="px-6 py-4 border-b border-white/5 bg-dark-950 flex items-center justify-between">
+            <div class="px-6 py-4 border-b border-white/10 bg-dark-950 flex items-center justify-between z-10">
                 <div class="flex items-center space-x-3">
                     <div class="w-3.5 h-3.5 rounded-full bg-neon-green animate-pulse"></div>
                     <h3 id="modal-game-title" class="font-outfit font-bold text-lg text-white">Loading Game...</h3>
@@ -470,10 +689,23 @@
                 <iframe id="gameplay-iframe" class="w-full h-full border-none opacity-0 transition-opacity duration-500" allow="autoplay; fullscreen; keyboard" src=""></iframe>
             </div>
             
-            <!-- Modal Footer -->
-            <div class="px-6 py-3 border-t border-white/5 bg-dark-950/50 flex flex-col sm:flex-row sm:justify-between sm:items-center text-xs text-gray-400 gap-2">
-                <span><i class="bi bi-info-circle mr-1"></i>WebAssembly runs completely locally in your browser.</span>
-                <span>Press <strong class="text-white bg-white/10 px-1.5 py-0.5 rounded">ESC</strong> inside the game window to free keyboard capture.</span>
+            <!-- Virtual Joystick Control Panel (Cabinet Base Bezel) -->
+            <div class="px-8 py-5 border-t border-white/10 bg-dark-950/80 flex items-center justify-between z-10">
+                <div class="flex items-center space-x-6">
+                    <!-- Virtual Joystick -->
+                    <div class="relative w-16 h-16 rounded-full bg-black/60 border border-white/10 flex items-center justify-center">
+                        <div id="virtual-stick" class="w-8 h-8 rounded-full bg-red-600 shadow-[0_0_15px_rgba(220,38,38,0.7)] transition-transform duration-100 ease-out" style="transform: translate(0px, 0px);"></div>
+                    </div>
+                    <span class="text-xs text-gray-500 uppercase font-mono tracking-wider hidden sm:inline">JOYSTICK TELEMETRY ACTIVE</span>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <!-- Action Buttons -->
+                    <div id="btn-a" class="w-10 h-10 rounded-full bg-neon-pink/80 border border-neon-pink shadow-md flex items-center justify-center text-xs font-bold text-white transition-all">A</div>
+                    <div id="btn-b" class="w-10 h-10 rounded-full bg-neon-blue/80 border border-neon-blue shadow-md flex items-center justify-center text-xs font-bold text-white transition-all">B</div>
+                </div>
+                
+                <span class="text-xs text-gray-400 hidden md:inline"><i class="bi bi-info-circle mr-1"></i>Press <strong class="text-white bg-white/10 px-1.5 py-0.5 rounded">ESC</strong> inside the game window to free keyboard capture.</span>
             </div>
         </div>
     </div>
@@ -488,7 +720,7 @@
                 </div>
                 <h2 class="text-3xl font-outfit font-bold tracking-tight mb-4">Want to run them natively as desktop apps?</h2>
                 <p class="text-gray-400 leading-relaxed mb-6">
-                    This entire collection is structured as a professional, multi-project Python workspace. You can run all 8 games locally using standard python CLI commands.
+                    This entire collection is structured as a professional, multi-project Python workspace. You can run all 15 games locally using standard python CLI commands.
                 </p>
                 <ul class="space-y-4 text-sm text-gray-300">
                     <li class="flex items-start gap-3">
@@ -568,8 +800,180 @@
         const iframe = document.getElementById('gameplay-iframe');
         const loader = document.getElementById('iframe-loader');
         const titleText = document.getElementById('modal-game-title');
+        const virtualStick = document.getElementById('virtual-stick');
+        const btnA = document.getElementById('btn-a');
+        const btnB = document.getElementById('btn-b');
+        
+        let selectedCategoryVal = 'ALL';
+        
+        // Web Audio API Sound Generator
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playHoverSound() {
+            initAudio();
+            if (!audioCtx) return;
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(550, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(750, audioCtx.currentTime + 0.06);
+            
+            gain.gain.setValueAtTime(0.012, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.06);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.06);
+        }
+
+        function playClickSound() {
+            initAudio();
+            if (!audioCtx) return;
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(250, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1100, audioCtx.currentTime + 0.2);
+            
+            gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.2);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.2);
+        }
+
+        function playExitSound() {
+            initAudio();
+            if (!audioCtx) return;
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(700, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.22);
+            
+            gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.22);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.22);
+        }
+
+        // LocalStorage Stats Engine
+        let stats = {
+            gamesPlayed: 0,
+            uniquePlayed: [],
+            sessionStart: Date.now(),
+            totalTime: 0,
+            lastPlayed: 'None'
+        };
+
+        function loadStats() {
+            let saved = localStorage.getItem('arcade_stats');
+            if (saved) {
+                try {
+                    stats = JSON.parse(saved);
+                    // Ensure session start is updated for this run
+                    stats.sessionStart = Date.now();
+                } catch(e) {}
+            }
+            updateStatsUI();
+        }
+
+        function saveStats() {
+            localStorage.setItem('arcade_stats', JSON.stringify(stats));
+        }
+
+        function updateStatsUI() {
+            document.getElementById('stat-played').innerText = stats.gamesPlayed;
+            document.getElementById('stat-unlocked').innerText = stats.uniquePlayed.length + '/15';
+            document.getElementById('stat-last').innerText = stats.lastPlayed;
+            
+            // Calculate playtime
+            let elapsed = Math.floor((Date.now() - stats.sessionStart) / 1000) + (stats.totalTime || 0);
+            let min = Math.floor(elapsed / 60);
+            let sec = elapsed % 60;
+            document.getElementById('stat-time').innerText = min + 'm ' + sec + 's';
+        }
+
+        // Trigger stats loop
+        setInterval(updateStatsUI, 1000);
+        window.addEventListener('beforeunload', () => {
+            // Save accumulated playtime on exit
+            stats.totalTime = Math.floor((Date.now() - stats.sessionStart) / 1000) + (stats.totalTime || 0);
+            saveStats();
+        });
+
+        // Load stats on bootstrap
+        loadStats();
+
+        // Interactive filtering and searching
+        function selectCategory(category) {
+            playHoverSound();
+            selectedCategoryVal = category;
+            
+            // Highlight selected chip
+            const chips = document.querySelectorAll('.cat-chip');
+            chips.forEach(chip => {
+                if (chip.innerText === category || (category === 'ALL' && chip.innerText === 'ALL SLOTS')) {
+                    chip.classList.add('bg-white/5', 'text-white', 'border-neon-blue');
+                    chip.classList.remove('text-gray-400');
+                } else {
+                    chip.classList.remove('bg-white/5', 'text-white', 'border-neon-blue');
+                    chip.classList.add('text-gray-400');
+                }
+            });
+            
+            filterGames();
+        }
+
+        function filterGames() {
+            const searchQuery = document.getElementById('game-search').value.toLowerCase().trim();
+            const cards = document.querySelectorAll('.game-card');
+            
+            cards.forEach(card => {
+                const title = (card.getAttribute('data-title') || '').toLowerCase();
+                const category = card.getAttribute('data-category') || 'ALL';
+                
+                const matchesSearch = title.includes(searchQuery);
+                const matchesCategory = (selectedCategoryVal === 'ALL' || category === selectedCategoryVal);
+                
+                if (matchesSearch && matchesCategory) {
+                    card.style.display = 'flex';
+                    card.style.opacity = '1';
+                    card.style.transform = 'scale(1)';
+                } else {
+                    card.style.display = 'none';
+                    card.style.opacity = '0';
+                    card.style.transform = 'scale(0.95)';
+                }
+            });
+        }
         
         function launchGame(name, buildPath) {
+            playClickSound();
+            
+            // Record telemetry
+            stats.gamesPlayed += 1;
+            stats.lastPlayed = name;
+            if (!stats.uniquePlayed.includes(name)) {
+                stats.uniquePlayed.push(name);
+            }
+            saveStats();
+            updateStatsUI();
+
             titleText.innerText = name + ' | Arcade Wasm Cabinet';
             loader.style.display = 'flex';
             iframe.style.opacity = '0';
@@ -582,12 +986,11 @@
             modal.classList.add('opacity-100');
             document.body.style.overflow = 'hidden';
             
-            // Wait for iframe to load, then hide loader and fade in the game
+            // Focus the iframe to capture keys immediately
             iframe.onload = function() {
                 loader.style.display = 'none';
                 iframe.style.opacity = '1';
                 
-                // Focus the iframe to capture keys immediately
                 setTimeout(() => {
                     iframe.contentWindow.focus();
                 }, 100);
@@ -595,6 +998,7 @@
         }
         
         function closeGame() {
+            playExitSound();
             // Close modal
             modal.classList.remove('opacity-100');
             modal.classList.add('opacity-0', 'pointer-events-none');
@@ -605,6 +1009,7 @@
         }
         
         function toggleFullscreen() {
+            playClickSound();
             if (iframe.requestFullscreen) {
                 iframe.requestFullscreen();
             } else if (iframe.mozRequestFullScreen) { /* Firefox */
@@ -617,6 +1022,7 @@
         }
         
         function copyCommand(id) {
+            playClickSound();
             const cmd = document.getElementById(id).innerText;
             navigator.clipboard.writeText(cmd).then(() => {
                 alert('Command copied to clipboard!');
@@ -625,10 +1031,44 @@
             });
         }
 
-        // Close modal when pressing ESC outside iframe
+        // Bezel Joystick / Buttons keystroke listeners
         window.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && !modal.classList.contains('pointer-events-none')) {
+            if (modal.classList.contains('pointer-events-none')) return;
+            
+            // Joystick tilts
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'q') {
+                virtualStick.style.transform = 'translate(-15px, 0px) skewX(-8deg)';
+            } else if (e.key === 'ArrowRight' || e.key === 'd') {
+                virtualStick.style.transform = 'translate(15px, 0px) skewX(8deg)';
+            } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'z') {
+                virtualStick.style.transform = 'translate(0px, -15px)';
+            } else if (e.key === 'ArrowDown' || e.key === 's') {
+                virtualStick.style.transform = 'translate(0px, 15px)';
+            }
+            
+            // Buttons lit up
+            if (e.key === 'Space' || e.key === ' ') {
+                btnA.classList.add('scale-90', 'bg-neon-pink', 'shadow-[0_0_15px_rgba(236,72,153,1)]');
+            } else if (e.key === 'Control') {
+                btnB.classList.add('scale-90', 'bg-neon-blue', 'shadow-[0_0_15px_rgba(59,130,246,1)]');
+            }
+            
+            // Close modal when pressing ESC outside iframe
+            if (e.key === 'Escape') {
                 closeGame();
+            }
+        });
+
+        window.addEventListener('keyup', function(e) {
+            // Reset stick
+            if (['ArrowLeft', 'a', 'q', 'ArrowRight', 'd', 'ArrowUp', 'w', 'z', 'ArrowDown', 's'].includes(e.key)) {
+                virtualStick.style.transform = 'translate(0px, 0px)';
+            }
+            // Reset buttons
+            if (e.key === 'Space' || e.key === ' ') {
+                btnA.classList.remove('scale-90', 'bg-neon-pink', 'shadow-[0_0_15px_rgba(236,72,153,1)]');
+            } else if (e.key === 'Control') {
+                btnB.classList.remove('scale-90', 'bg-neon-blue', 'shadow-[0_0_15px_rgba(59,130,246,1)]');
             }
         });
     </script>

@@ -20,10 +20,12 @@ NEON_BLUE = (0, 200, 255)
 NEON_PINK = (255, 0, 150)
 NEON_PURPLE = (180, 0, 255)
 NEON_GREEN = (0, 255, 100)
+NEON_ORANGE = (259, 120, 0)
 GOLD = (255, 215, 0)
 WHITE = (255, 255, 255)
 GRAY = (150, 150, 160)
 DARK_CARD = (16, 20, 42, 140)
+FPS = 60
 
 # Fonts
 try:
@@ -46,7 +48,7 @@ except:
         CAT_FONT = pygame.font.Font(None, 14)
         BTN_FONT = pygame.font.Font(None, 22)
 
-# Game Database
+# Game Database (Expanded to 15 games)
 GAMES = [
     {
         "name": "Tetris",
@@ -127,8 +129,49 @@ GAMES = [
         "cat": "BOARD",
         "desc": "Classic board game of checkers. Plan your moves, jump over opponent tokens to capture them, crown your pieces, and wipe the board.",
         "keys": "Mouse Click (Select and move checkers pieces)"
+    },
+    {
+        "name": "Neon Asteroids",
+        "path": "Asteroids/main.py",
+        "dir": "Asteroids",
+        "cat": "SURVIVAL",
+        "desc": "Classic vector space survival. Blast giant radioactive asteroids that shatter into smaller fragments, manage shield cores, and steer against high-speed impacts.",
+        "keys": "UP (Thrust), Left/Right (Rotate), Space (Fire Lasers)"
+    },
+    {
+        "name": "Neon Pac-Man",
+        "path": "Pacman/main.py",
+        "dir": "Pacman",
+        "cat": "RETRO",
+        "desc": "Munch glowing dot pellets in a cybernetic grid maze, avoid colorful AI-controlled ghosts, and eat power pills to trigger high-score counter hunts.",
+        "keys": "Arrow Keys (Steer Pacman through maze paths)"
+    },
+    {
+        "name": "Flappy Neon",
+        "path": "Flappy/main.py",
+        "dir": "Flappy",
+        "cat": "ACTION",
+        "desc": "High-speed flight avoidance. Tap to flap your glowing vector bird through moving hazard pipe gates, spawn trailing sparks, and test your split-second reflexes.",
+        "keys": "Space / UP Arrow / Left Mouse Click (Flap Wing)"
+    },
+    {
+        "name": "Neon Lander",
+        "path": "Lander/main.py",
+        "dir": "Lander",
+        "cat": "SURVIVAL",
+        "desc": "Lunar module gravity descent simulator. Burn fuel thrusters to slow your vertical falling speed, balance roll angle, and perform soft touchdowns on glowing cyan pads.",
+        "keys": "UP (Thrust), Left/Right (Rotate Capsule)"
+    },
+    {
+        "name": "Neon Minesweeper",
+        "path": "Minesweeper/main.py",
+        "dir": "Minesweeper",
+        "cat": "PUZZLE",
+        "desc": "Tactical radioactive hazard sweeper. Scan cells on a glowing 10x10 matrix, flag mine coordinates, and perform safe sweeps in bright neon spark bursts.",
+        "keys": "Left Click (Uncover Cell) | Right Click (Flag Mine)"
     }
 ]
+
 
 # Parallax Drifting Stars
 class Star:
@@ -153,6 +196,7 @@ class Star:
     def draw(self, surface):
         pygame.draw.circle(surface, self.color, (int(self.x), int(self.y)), int(self.size))
 
+
 # Text Wrapper
 def draw_text_wrap(surface, text, font, color, x, y, max_width):
     words = text.split(' ')
@@ -174,6 +218,7 @@ def draw_text_wrap(surface, text, font, color, x, y, max_width):
         surface.blit(text_surface, (x, y_offset))
         y_offset += font.get_linesize() + 4
 
+
 def draw_neon_grid(surface):
     # Base fill
     surface.fill(DARK_BG)
@@ -183,11 +228,13 @@ def draw_neon_grid(surface):
     for y in range(0, HEIGHT, 50):
         pygame.draw.line(surface, GRID_LINE_COLOR, (0, y), (WIDTH, y))
 
+
 def launch_game(game):
     print(f"Launching {game['name']}...")
     # Use sys.executable to run the subgame in the exact same python virtual environment
     # Run in working directory of the game to ensure correct relative asset loading
     subprocess.Popen([sys.executable, os.path.basename(game["path"])], cwd=game["dir"])
+
 
 def main():
     run = True
@@ -197,11 +244,13 @@ def main():
     stars = [Star() for _ in range(80)]
 
     selected_index = 0
+    visible_start = 0
+    max_visible_items = 9  # Display at most 9 items at once to avoid overflow
     
     # Layout Coordinates
     list_x, list_y = 45, 105
     list_w, list_h = 390, 520
-    item_h = 44
+    item_h = 48
     item_gap = 8
 
     card_x, card_y = 475, 105
@@ -210,7 +259,7 @@ def main():
     launch_btn_rect = pygame.Rect(card_x + 30, card_y + card_h - 90, card_w - 60, 55)
 
     while run:
-        clock.tick(60)
+        clock.tick(FPS)
         mouse_pos = pygame.mouse.get_pos()
         mouse_clicked = False
 
@@ -235,6 +284,12 @@ def main():
                 if event.button == 1:
                     mouse_clicked = True
 
+        # Adjust sliding visible window offset based on selection index
+        if selected_index < visible_start:
+            visible_start = selected_index
+        elif selected_index >= visible_start + max_visible_items:
+            visible_start = selected_index - max_visible_items + 1
+
         # Render background
         draw_neon_grid(WIN)
         for star in stars:
@@ -247,9 +302,14 @@ def main():
         WIN.blit(title_glow, (WIDTH // 2 - title_surf.get_width() // 2 + 2, 27))
         WIN.blit(title_surf, (WIDTH // 2 - title_surf.get_width() // 2, 25))
 
-        # Render Left Scrollable List
-        for i, game in enumerate(GAMES):
-            item_y = list_y + i * (item_h + item_gap)
+        # Render Left Scrollable List (drawing only the visible window)
+        for idx in range(max_visible_items):
+            i = visible_start + idx
+            if i >= len(GAMES):
+                break
+                
+            game = GAMES[i]
+            item_y = list_y + idx * (item_h + item_gap)
             item_rect = pygame.Rect(list_x, item_y, list_w, item_h)
             
             is_hovered = item_rect.collidepoint(mouse_pos)
@@ -294,6 +354,14 @@ def main():
             pygame.draw.rect(WIN, cat_color, badge_rect, 1, border_radius=4)
             WIN.blit(cat_badge, (badge_rect.x + 6, badge_rect.y + 3))
 
+        # Render Scroll Indicators (small arrows if list is scrollable)
+        if visible_start > 0:
+            # Up arrow indicator
+            pygame.draw.polygon(WIN, NEON_BLUE, [(list_x + list_w // 2, list_y - 12), (list_x + list_w // 2 - 8, list_y - 4), (list_x + list_w // 2 + 8, list_y - 4)])
+        if visible_start + max_visible_items < len(GAMES):
+            # Down arrow indicator
+            pygame.draw.polygon(WIN, NEON_BLUE, [(list_x + list_w // 2, list_y + list_h + 4), (list_x + list_w // 2 - 8, list_y + list_h - 4), (list_x + list_w // 2 + 8, list_y + list_h - 4)])
+
         # Render Right Glassmorphic Card (Details)
         selected_game = GAMES[selected_index]
         
@@ -336,13 +404,13 @@ def main():
         btn_hovered = launch_btn_rect.collidepoint(mouse_pos)
         if btn_hovered:
             pygame.draw.rect(WIN, NEON_BLUE, launch_btn_rect, border_radius=12)
-            btn_text = BTN_FONT.render("LAUNCH GAME", True, DARK_BG)
+            btn_text = BTN_FONT.render("LAUNCH GAME NATIVE", True, DARK_BG)
             if mouse_clicked:
                 launch_game(selected_game)
         else:
             pygame.draw.rect(WIN, DARK_BG, launch_btn_rect, border_radius=12)
             pygame.draw.rect(WIN, NEON_BLUE, launch_btn_rect, 2, border_radius=12)
-            btn_text = BTN_FONT.render("LAUNCH GAME", True, NEON_BLUE)
+            btn_text = BTN_FONT.render("LAUNCH GAME NATIVE", True, NEON_BLUE)
             
         WIN.blit(btn_text, (launch_btn_rect.centerx - btn_text.get_width() // 2, launch_btn_rect.centery - btn_text.get_height() // 2))
 
@@ -353,6 +421,7 @@ def main():
         pygame.display.update()
 
     pygame.quit()
+
 
 if __name__ == "__main__":
     main()
