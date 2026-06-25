@@ -1,0 +1,326 @@
+import pygame
+import random
+import sys
+import asyncio
+import platform
+
+# Initialize Pygame
+pygame.init()
+
+# Constants
+WIDTH, HEIGHT = 800, 600
+GRID_SIZE = 20
+GRID_WIDTH = WIDTH // GRID_SIZE
+GRID_HEIGHT = HEIGHT // GRID_SIZE
+
+# Colors (Neon Palette)
+BG_COLOR = (10, 10, 18)
+GRID_COLOR = (20, 20, 35)
+SNAKE_HEAD = (0, 255, 150)
+SNAKE_BODY_INNER = (0, 200, 100)
+SNAKE_BODY_OUTER = (0, 100, 50)
+FOOD_COLOR = (255, 0, 100)
+FOOD_GLOW = (150, 0, 60)
+TEXT_COLOR = (0, 200, 255)
+UI_BORDER = (0, 150, 255)
+WHITE = (255, 255, 255)
+SHADOW_COLOR = (0, 0, 0)
+
+# Set up display
+WIN = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Neon Snake - Arcade Edition")
+
+# Fonts
+try:
+    FONT_LARGE = pygame.font.SysFont("Outfit", 45, bold=True)
+    FONT_MEDIUM = pygame.font.SysFont("Outfit", 30)
+    FONT_SMALL = pygame.font.SysFont("Outfit", 20)
+except:
+    try:
+        FONT_LARGE = pygame.font.SysFont("sans-serif", 45, bold=True)
+        FONT_MEDIUM = pygame.font.SysFont("sans-serif", 30)
+        FONT_SMALL = pygame.font.SysFont("sans-serif", 20)
+    except:
+        FONT_LARGE = pygame.font.Font(None, 45)
+        FONT_MEDIUM = pygame.font.Font(None, 30)
+        FONT_SMALL = pygame.font.Font(None, 20)
+
+class ParticleSystem:
+    def __init__(self):
+        self.particles = []
+
+    def emit(self, x, y, color):
+        for _ in range(15):
+            self.particles.append({
+                "x": x + GRID_SIZE // 2,
+                "y": y + GRID_SIZE // 2,
+                "vx": random.uniform(-3.0, 3.0),
+                "vy": random.uniform(-3.0, 3.0),
+                "life": random.randint(15, 30),
+                "max_life": 30,
+                "color": color
+            })
+
+    def update(self):
+        for p in self.particles[:]:
+            p["x"] += p["vx"]
+            p["y"] += p["vy"]
+            p["life"] -= 1
+            if p["life"] <= 0:
+                self.particles.remove(p)
+
+    def draw(self, surface):
+        for p in self.particles:
+            radius = int((p["life"] / p["max_life"]) * 4) + 1
+            pygame.draw.circle(surface, p["color"], (int(p["x"]), int(p["y"])), radius)
+
+class Snake:
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.positions = [(GRID_WIDTH // 2, GRID_HEIGHT // 2), 
+                          (GRID_WIDTH // 2 - 1, GRID_HEIGHT // 2),
+                          (GRID_WIDTH // 2 - 2, GRID_HEIGHT // 2)]
+        self.direction = (1, 0)
+        self.next_direction = (1, 0)
+        self.grow_pending = False
+
+    def handle_keys(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key in [pygame.K_UP, pygame.K_w] and self.direction != (0, 1):
+                self.next_direction = (0, -1)
+            elif event.key in [pygame.K_DOWN, pygame.K_s] and self.direction != (0, -1):
+                self.next_direction = (0, 1)
+            elif event.key in [pygame.K_LEFT, pygame.K_a] and self.direction != (1, 0):
+                self.next_direction = (-1, 0)
+            elif event.key in [pygame.K_RIGHT, pygame.K_d] and self.direction != (-1, 0):
+                self.next_direction = (1, 0)
+
+    def update(self):
+        self.direction = self.next_direction
+        cur_head = self.positions[0]
+        dx, dy = self.direction
+        new_head = (cur_head[0] + dx, cur_head[1] + dy)
+        
+        # Check wall collision
+        if new_head[0] < 0 or new_head[0] >= GRID_WIDTH or new_head[1] < 0 or new_head[1] >= GRID_HEIGHT:
+            return False
+            
+        # Check self collision
+        if new_head in self.positions:
+            return False
+            
+        self.positions.insert(0, new_head)
+        if not self.grow_pending:
+            self.positions.pop()
+        else:
+            self.grow_pending = False
+        return True
+
+    def grow(self):
+        self.grow_pending = True
+
+    def draw(self, surface):
+        for i, pos in enumerate(self.positions):
+            x = pos[0] * GRID_SIZE
+            y = pos[1] * GRID_SIZE
+            rect = pygame.Rect(x, y, GRID_SIZE, GRID_SIZE)
+            
+            if i == 0:
+                # Head: Neon mint with eyes
+                pygame.draw.rect(surface, SNAKE_HEAD, rect, border_radius=4)
+                # Draw small eyes
+                eye_color = (0, 0, 0)
+                dx, dy = self.direction
+                if dx != 0:
+                    pygame.draw.circle(surface, eye_color, (x + GRID_SIZE // 2, y + 6), 2)
+                    pygame.draw.circle(surface, eye_color, (x + GRID_SIZE // 2, y + 14), 2)
+                else:
+                    pygame.draw.circle(surface, eye_color, (x + 6, y + GRID_SIZE // 2), 2)
+                    pygame.draw.circle(surface, eye_color, (x + 14, y + GRID_SIZE // 2), 2)
+            else:
+                # Body: Gradient green
+                factor = min(1.0, i / len(self.positions))
+                color = (
+                    int(SNAKE_BODY_INNER[0] * (1 - factor) + SNAKE_BODY_OUTER[0] * factor),
+                    int(SNAKE_BODY_INNER[1] * (1 - factor) + SNAKE_BODY_OUTER[1] * factor),
+                    int(SNAKE_BODY_INNER[2] * (1 - factor) + SNAKE_BODY_OUTER[2] * factor)
+                )
+                pygame.draw.rect(surface, color, rect, border_radius=6)
+                pygame.draw.rect(surface, SNAKE_HEAD, (x + 4, y + 4, GRID_SIZE - 8, GRID_SIZE - 8), border_radius=3)
+
+class Food:
+    def __init__(self):
+        self.position = (0, 0)
+        self.randomize_position([])
+        self.pulse = 0
+        self.pulse_dir = 1
+
+    def randomize_position(self, snake_positions):
+        while True:
+            pos = (random.randint(0, GRID_WIDTH - 1), random.randint(0, GRID_HEIGHT - 1))
+            if pos not in snake_positions:
+                self.position = pos
+                break
+
+    def draw(self, surface):
+        x = self.position[0] * GRID_SIZE
+        y = self.position[1] * GRID_SIZE
+        
+        # Animate glowing pulse
+        self.pulse += 0.2 * self.pulse_dir
+        if self.pulse > 3 or self.pulse < 0:
+            self.pulse_dir *= -1
+            
+        radius = GRID_SIZE // 2 - 2 + int(self.pulse)
+        # Outer neon glow
+        pygame.draw.circle(surface, FOOD_GLOW, (x + GRID_SIZE // 2, y + GRID_SIZE // 2), radius + 4)
+        # Inner core
+        pygame.draw.circle(surface, FOOD_COLOR, (x + GRID_SIZE // 2, y + GRID_SIZE // 2), radius - 1)
+        # Center white sparkle
+        pygame.draw.circle(surface, WHITE, (x + GRID_SIZE // 2, y + GRID_SIZE // 2), 2)
+
+def draw_grid(surface):
+    for x in range(0, WIDTH, GRID_SIZE):
+        pygame.draw.line(surface, GRID_COLOR, (x, 0), (x, HEIGHT))
+    for y in range(0, HEIGHT, GRID_SIZE):
+        pygame.draw.line(surface, GRID_COLOR, (0, y), (WIDTH, y))
+
+def submit_score(score):
+    print(f"Game over. Final Score: {score}")
+    if platform.system() == 'Emscripten':
+        try:
+            import window
+            window.submitGameScore("snake", score)
+            print("Score submitted to platform via Emscripten bridge.")
+        except Exception as e:
+            print(f"Error submitting score: {e}")
+
+async def main():
+    run = True
+    clock = pygame.time.Clock()
+    
+    snake = Snake()
+    food = Food()
+    food.randomize_position(snake.positions)
+    particles = ParticleSystem()
+    
+    score = 0
+    high_score = 0
+    game_over = False
+    score_submitted = False
+    
+    # Base game speed (frames per second / ticks)
+    base_speed = 8
+    speed = base_speed
+    
+    # Sound/Effect triggers
+    def trigger_eat_effect():
+        fx = food.position[0] * GRID_SIZE
+        fy = food.position[1] * GRID_SIZE
+        particles.emit(fx, fy, FOOD_COLOR)
+        particles.emit(fx, fy, SNAKE_HEAD)
+        
+    while run:
+        # Check events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+            elif event.type == pygame.KEYDOWN:
+                if game_over:
+                    if event.key == pygame.K_r:
+                        # Reset game
+                        snake.reset()
+                        food.randomize_position(snake.positions)
+                        score = 0
+                        speed = base_speed
+                        game_over = False
+                        score_submitted = False
+                    elif event.key == pygame.K_q:
+                        run = False
+                else:
+                    snake.handle_keys(event)
+
+        # Game update logic
+        if not game_over:
+            # Move snake
+            alive = snake.update()
+            if not alive:
+                game_over = True
+            
+            # Check food consumption
+            if snake.positions[0] == food.position:
+                snake.grow()
+                trigger_eat_effect()
+                score += 10
+                if score > high_score:
+                    high_score = score
+                food.randomize_position(snake.positions)
+                
+                # Dynamic speed scaling: increase speed every 40 points
+                speed = base_speed + (score // 40)
+                if speed > 22:
+                    speed = 22 # Cap speed
+            
+            particles.update()
+        else:
+            if not score_submitted:
+                submit_score(score)
+                score_submitted = True
+
+        # Render
+        WIN.fill(BG_COLOR)
+        draw_grid(WIN)
+        
+        # Draw game elements
+        food.draw(WIN)
+        snake.draw(WIN)
+        particles.draw(WIN)
+        
+        # Draw HUD (Neon banner at top or overlay)
+        # Draw Score
+        score_text = FONT_MEDIUM.render(f"SCORE: {score}", True, TEXT_COLOR)
+        high_score_text = FONT_MEDIUM.render(f"HIGH: {high_score}", True, TEXT_COLOR)
+        
+        # Draw simple semi-transparent back panel for text
+        hud_panel = pygame.Surface((WIDTH, 40), pygame.SRCALPHA)
+        pygame.draw.rect(hud_panel, (10, 10, 20, 180), (0, 0, WIDTH, 40))
+        WIN.blit(hud_panel, (0, 0))
+        pygame.draw.line(WIN, UI_BORDER, (0, 40), (WIDTH, 40), 2)
+        
+        WIN.blit(score_text, (20, 5))
+        WIN.blit(high_score_text, (WIDTH - high_score_text.get_width() - 20, 5))
+        
+        # Game Over Screen Overlay
+        if game_over:
+            # Draw semi-transparent black overlay
+            overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+            pygame.draw.rect(overlay, (5, 5, 10, 200), (0, 0, WIDTH, HEIGHT))
+            WIN.blit(overlay, (0, 0))
+            
+            # Draw glowing game over panel
+            panel_rect = pygame.Rect(WIDTH // 4, HEIGHT // 4, WIDTH // 2, HEIGHT // 2)
+            pygame.draw.rect(WIN, (15, 15, 25), panel_rect, border_radius=15)
+            pygame.draw.rect(WIN, FOOD_COLOR, panel_rect, 3, border_radius=15)
+            
+            title = FONT_LARGE.render("GAME OVER", True, FOOD_COLOR)
+            score_summary = FONT_MEDIUM.render(f"FINAL SCORE: {score}", True, WHITE)
+            restart_instruction = FONT_SMALL.render("PRESS 'R' TO REPLAY", True, TEXT_COLOR)
+            quit_instruction = FONT_SMALL.render("PRESS 'Q' TO QUIT", True, TEXT_COLOR)
+            
+            # Draw elements centered in panel
+            WIN.blit(title, (WIDTH // 2 - title.get_width() // 2, HEIGHT // 2 - 80))
+            WIN.blit(score_summary, (WIDTH // 2 - score_summary.get_width() // 2, HEIGHT // 2 - 20))
+            WIN.blit(restart_instruction, (WIDTH // 2 - restart_instruction.get_width() // 2, HEIGHT // 2 + 40))
+            WIN.blit(quit_instruction, (WIDTH // 2 - quit_instruction.get_width() // 2, HEIGHT // 2 + 70))
+            
+        pygame.display.flip()
+        
+        # Control framerate (clock.tick(speed))
+        # Note: pygbag runs perfectly using this standard clock tick, but to yield execution, we MUST do await asyncio.sleep(0)
+        clock.tick(speed if not game_over else 15)
+        await asyncio.sleep(0)
+
+if __name__ == "__main__":
+    asyncio.run(main())

@@ -29,6 +29,7 @@ GAMES = [
     {"name": "Pong", "path": "pong/main.py", "dir": "pong"},
     {"name": "Space Dodge", "path": "Space_Dodge/main.py", "dir": "Space_Dodge"},
     {"name": "Space Invader", "path": "Space_invader/main.py", "dir": "Space_invader"},
+    {"name": "Snake", "path": "snake/main.py", "dir": "snake"},
 ]
 
 def draw_button(rect, text, is_hovered):
@@ -53,13 +54,13 @@ def main():
     clock = pygame.time.Clock()
 
     # Calculate button positions
-    button_width = 250
-    button_height = 60
-    padding = 30
-    cols = 2
+    button_width = 210
+    button_height = 55
+    padding = 25
+    cols = 3
     
     start_x = (WIDTH - (cols * button_width + (cols - 1) * padding)) // 2
-    start_y = 150
+    start_y = 170
 
     buttons = []
     for i, game in enumerate(GAMES):
