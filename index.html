@@ -179,13 +179,38 @@
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-neon-green opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-neon-green"></span>
                 </span>
-                <span class="text-gray-300 font-semibold uppercase tracking-wider">8 Cabinet Slots Functional</span>
+                <span class="text-gray-300 font-semibold uppercase tracking-wider">10 Cabinet Slots Functional</span>
             </div>
         </div>
         
         <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             
-            <!-- Game 1: Space Shooter / Invader -->
+            <!-- Game 1: Neon Tetris -->
+            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
+                <div>
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="w-12 h-12 rounded-xl bg-neon-blue/10 flex items-center justify-center border border-neon-blue/20 text-neon-blue text-2xl">
+                            <i class="bi bi-bricks"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-500 text-xs font-semibold uppercase">Puzzle</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">Neon Tetris</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
+                        The ultimate block puzzle remake. Fit falling neon blocks, align with the ghost projection, hold pieces, and clear rows with explosive particle bursts.
+                    </p>
+                </div>
+                <div>
+                    <div class="border-t border-white/5 pt-4 mb-4 text-xs text-gray-500">
+                        <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
+                        Arrows (Move/Rotate), Space (Hard Drop), C/Shift (Hold)
+                    </div>
+                    <button onclick="launchGame('Neon Tetris', './Tetris/build/web/')" class="w-full py-3 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
+                        <i class="bi bi-play-fill text-lg"></i>Play Wasm Build
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game 2: Space Shooter / Invader -->
             <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
                 <div>
                     <div class="flex justify-between items-start mb-5">
@@ -210,7 +235,7 @@
                 </div>
             </div>
 
-            <!-- Game 2: Car Racing -->
+            <!-- Game 3: Car Racing -->
             <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
                 <div>
                     <div class="flex justify-between items-start mb-5">
@@ -235,7 +260,7 @@
                 </div>
             </div>
 
-            <!-- Game 3: Platformer -->
+            <!-- Game 4: Platformer -->
             <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
                 <div>
                     <div class="flex justify-between items-start mb-5">
@@ -260,7 +285,7 @@
                 </div>
             </div>
 
-            <!-- Game 4: Galaxy Fight -->
+            <!-- Game 5: Galaxy Fight -->
             <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
                 <div>
                     <div class="flex justify-between items-start mb-5">
@@ -285,7 +310,32 @@
                 </div>
             </div>
 
-            <!-- Game 5: 2048 -->
+            <!-- Game 6: Snake -->
+            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
+                <div>
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="w-12 h-12 rounded-xl bg-neon-green/10 flex items-center justify-center border border-neon-green/20 text-neon-green text-2xl">
+                            <i class="bi bi-apple"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-md bg-neon-green/10 text-neon-green text-xs font-semibold uppercase">Retro</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">Snake</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
+                        Neon-themed retro snake. Gobble glowing fruit pellets, grow your neon tail, and navigate at high speeds without hitting borders or yourself.
+                    </p>
+                </div>
+                <div>
+                    <div class="border-t border-white/5 pt-4 mb-4 text-xs text-gray-500">
+                        <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
+                        Arrows or WASD (Move), R (Replay on Game Over)
+                    </div>
+                    <button onclick="launchGame('Snake', './snake/build/web/')" class="w-full py-3 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
+                        <i class="bi bi-play-fill text-lg"></i>Play Wasm Build
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game 7: 2048 -->
             <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
                 <div>
                     <div class="flex justify-between items-start mb-5">
@@ -310,7 +360,7 @@
                 </div>
             </div>
 
-            <!-- Game 6: Checkers -->
+            <!-- Game 8: Checkers -->
             <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
                 <div>
                     <div class="flex justify-between items-start mb-5">
@@ -335,7 +385,7 @@
                 </div>
             </div>
 
-            <!-- Game 7: Pong -->
+            <!-- Game 9: Pong -->
             <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
                 <div>
                     <div class="flex justify-between items-start mb-5">
@@ -346,7 +396,7 @@
                     </div>
                     <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">Pong</h3>
                     <p class="text-gray-400 text-sm leading-relaxed mb-6">
-                        The ultimate retro tennis showdown. Control your paddle, calculate bounce angles, and score 10 points to win.
+                        The ultimate retro tennis cyberpunk showdown. Control your glowing paddle, calculate bounce angles, and score 10 points to win.
                     </p>
                 </div>
                 <div>
@@ -360,7 +410,7 @@
                 </div>
             </div>
 
-            <!-- Game 8: Space Dodge -->
+            <!-- Game 10: Space Dodge -->
             <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 group">
                 <div>
                     <div class="flex justify-between items-start mb-5">
@@ -371,13 +421,13 @@
                     </div>
                     <h3 class="text-xl font-bold mb-2 text-white group-hover:text-neon-blue transition-colors">Space Dodge</h3>
                     <p class="text-gray-400 text-sm leading-relaxed mb-6">
-                        An addictive avoidance game. Dodge endless streams of falling meteor stars. The longer you survive, the higher your score.
+                        An addictive avoidance game. Dodge endless streams of falling glowing orange meteorites. The longer you survive, the higher your score.
                     </p>
                 </div>
                 <div>
                     <div class="border-t border-white/5 pt-4 mb-4 text-xs text-gray-500">
                         <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
-                        Left / Right Arrows (Move Left/Right)
+                        Left / Right Arrows or A / D keys
                     </div>
                     <button onclick="launchGame('Space Dodge', './Space_Dodge/build/web/')" class="w-full py-3 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
                         <i class="bi bi-play-fill text-lg"></i>Play Wasm Build

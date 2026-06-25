@@ -2,7 +2,6 @@ import pygame
 from constants import BLACK, ROWS, RED, SQUARE_SIZE, COLS, WHITE
 from piece import Piece
 
-
 class Board:
     def __init__(self):
         self.board = []
@@ -11,21 +10,42 @@ class Board:
         self.create_board()
 
     def draw_squares(self, win):
-        win.fill(BLACK)
+        # Draw a beautiful dark space background
+        win.fill((8, 8, 16))
+        
         for row in range(ROWS):
-            for col in range(row % 2, COLS, 2):
-                pygame.draw.rect(win, RED, (row * SQUARE_SIZE, col * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+            for col in range(COLS):
+                x = col * SQUARE_SIZE
+                y = row * SQUARE_SIZE
+                
+                # Checkers uses a alternating grid where pieces only move on dark cells
+                is_playable = (col % 2 == ((row + 1) % 2))
+                
+                if is_playable:
+                    # Playable Cell: deep red/purple neon tile
+                    pygame.draw.rect(win, (28, 10, 20), (x + 2, y + 2, SQUARE_SIZE - 4, SQUARE_SIZE - 4), border_radius=8)
+                    pygame.draw.rect(win, (90, 10, 45), (x + 2, y + 2, SQUARE_SIZE - 4, SQUARE_SIZE - 4), 1, border_radius=8)
+                else:
+                    # Unplayable Cell: deep dark blue/charcoal tile
+                    pygame.draw.rect(win, (14, 15, 26), (x + 2, y + 2, SQUARE_SIZE - 4, SQUARE_SIZE - 4), border_radius=8)
+                    pygame.draw.rect(win, (25, 28, 48), (x + 2, y + 2, SQUARE_SIZE - 4, SQUARE_SIZE - 4), 1, border_radius=8)
+
+        # Draw outer glowing board border
+        pygame.draw.rect(win, (0, 200, 255), (0, 0, ROWS * SQUARE_SIZE, COLS * SQUARE_SIZE), 3)
 
     def move(self, piece, row, col):
         self.board[piece.row][piece.col], self.board[row][col] = self.board[row][col], self.board[piece.row][piece.col]
         piece.move(row, col)
 
         if row == ROWS - 1 or row == 0:
-            piece.make_king()
-            if piece.color == WHITE:
-                self.white_kings += 1
-            else:
-                self.red_kings += 1
+            if not piece.king:
+                piece.make_king()
+                if piece.color == WHITE:
+                    self.white_kings += 1
+                else:
+                    self.red_kings += 1
+                return True # King was crowned!
+        return False
 
     def get_piece(self, row, col):
         return self.board[row][col]
@@ -54,8 +74,8 @@ class Board:
 
     def remove(self, pieces):
         for piece in pieces:
-            self.board[piece.row][piece.col] = 0
             if piece != 0:
+                self.board[piece.row][piece.col] = 0
                 if piece.color == RED:
                     self.red_left -= 1
                 else:
@@ -67,6 +87,7 @@ class Board:
         elif self.white_left <= 0:
             return RED
 
+        # Additional Checkers check: if active player has NO valid moves left, opponent wins
         return None
 
     def get_valid_moves(self, piece):
