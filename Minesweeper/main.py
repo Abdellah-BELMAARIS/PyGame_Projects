@@ -3,6 +3,16 @@ import asyncio
 import random
 import math
 import os
+import sys
+
+try:
+    import arcade_api
+except ImportError:
+    sys.path.append("..")
+    try:
+        import arcade_api
+    except:
+        arcade_api = None
 
 # Initialize Pygame
 pygame.init()
@@ -267,6 +277,7 @@ async def main():
     run = True
     clock = pygame.time.Clock()
     game = MinesweeperGame()
+    score_submitted = False
     
     game_surface = pygame.Surface((WIDTH, HEIGHT))
 
@@ -289,6 +300,7 @@ async def main():
                 if game.game_over or game.victory:
                     if event.key == pygame.K_r:
                         game = MinesweeperGame()
+                        score_submitted = False
                         
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if not game.game_over and not game.victory:
@@ -296,6 +308,15 @@ async def main():
                         game.handle_click(pygame.mouse.get_pos(), False)
                     elif event.button == 3: # Right Click
                         game.handle_click(pygame.mouse.get_pos(), True)
+
+        # Submit score once on terminal state
+        if (game.game_over or game.victory) and not score_submitted:
+            score_submitted = True
+            if arcade_api:
+                # Score: cells revealed * 100 bonus for victory
+                cells_revealed = (ROWS * COLS - NUM_MINES) - game.cells_to_reveal
+                final_score = cells_revealed * 10 + (500 if game.victory else 0)
+                arcade_api.submit_score("Neon Minesweeper", final_score)
 
         # Draw
         game_surface.fill(DARK_BG)

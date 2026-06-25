@@ -4,9 +4,16 @@ import os
 import sys
 import random
 import math
+import json
+import array
 
 # Initialize Pygame
 pygame.init()
+if not pygame.mixer.get_init():
+    try:
+        pygame.mixer.init(22050, -16, 1, 512)
+    except Exception as e:
+        print("Mixer init failed:", e)
 
 # Constants
 WIDTH, HEIGHT = 950, 680
@@ -169,8 +176,77 @@ GAMES = [
         "cat": "PUZZLE",
         "desc": "Tactical radioactive hazard sweeper. Scan cells on a glowing 10x10 matrix, flag mine coordinates, and perform safe sweeps in bright neon spark bursts.",
         "keys": "Left Click (Uncover Cell) | Right Click (Flag Mine)"
+    },
+    {
+        "name": "Neon Breakout",
+        "path": "Breakout/main.py",
+        "dir": "Breakout",
+        "cat": "ACTION",
+        "desc": "Explosive brick-blasting arena. Launch glowing vector balls at armoured and explosive brick matrices, grab power-ups to trigger multi-ball cores and laser cannons.",
+        "keys": "Left/Right Arrows or A/D (Paddle), Space / Click (Laser Fire)"
     }
 ]
+
+# ------------------------------------------------------------------
+# Procedural Chiptune Synth Music Generator
+# ------------------------------------------------------------------
+def build_chiptune_loop():
+    """Generates a simple 8-note pentatonic arpeggio in memory."""
+    if not pygame.mixer.get_init():
+        return None
+    try:
+        sample_rate = 22050
+        note_dur = 0.12  # seconds per note
+        notes = [261, 329, 392, 523, 392, 329, 261, 196]  # C pentatonic arpeggio
+        total_samples = int(sample_rate * note_dur * len(notes))
+        buf = array.array('h', [0] * total_samples)
+        idx = 0
+        for freq in notes:
+            n = int(sample_rate * note_dur)
+            for i in range(n):
+                t = i / sample_rate
+                # Square wave
+                val = 1.0 if math.sin(2 * math.pi * freq * t) >= 0 else -1.0
+                # Fade envelope: ramp-up first 10% and fade last 20%
+                fade = 1.0
+                if i < n * 0.1:
+                    fade = i / (n * 0.1)
+                elif i > n * 0.8:
+                    fade = (n - i) / (n * 0.2)
+                sample = int(val * 32767 * 0.055 * fade)
+                buf[idx] = max(-32768, min(32767, sample))
+                idx += 1
+        snd = pygame.mixer.Sound(buf)
+        return snd
+    except Exception as e:
+        print("Chiptune synth failed:", e)
+        return None
+
+CHIPTUNE = build_chiptune_loop()
+
+# ------------------------------------------------------------------
+# CRT Scanline Overlay
+# ------------------------------------------------------------------
+def build_scanline_surface(width, height):
+    surf = pygame.Surface((width, height), pygame.SRCALPHA)
+    for y in range(0, height, 3):
+        pygame.draw.line(surf, (0, 0, 0, 50), (0, y), (width, y))
+    return surf
+
+SCANLINE_SURF = build_scanline_surface(WIDTH, HEIGHT)
+
+# ------------------------------------------------------------------
+# High Score Loader
+# ------------------------------------------------------------------
+def load_high_scores():
+    path = "high_scores.json"
+    if os.path.exists(path):
+        try:
+            with open(path, "r") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
 
 
 # Parallax Drifting Stars
@@ -246,6 +322,15 @@ def main():
     selected_index = 0
     visible_start = 0
     max_visible_items = 9  # Display at most 9 items at once to avoid overflow
+
+    # Chiptune & CRT state
+    music_on = True
+    scanlines_on = True
+    high_scores = load_high_scores()
+
+    # Start chiptune loop
+    if CHIPTUNE and music_on:
+        CHIPTUNE.play(-1)  # loop indefinitely
     
     # Layout Coordinates
     list_x, list_y = 45, 105
@@ -279,6 +364,20 @@ def main():
                 elif event.key == pygame.K_ESCAPE:
                     run = False
                     break
+                elif event.key == pygame.K_m:
+                    # Toggle chiptune music
+                    music_on = not music_on
+                    if CHIPTUNE:
+                        if music_on:
+                            CHIPTUNE.play(-1)
+                        else:
+                            CHIPTUNE.stop()
+                elif event.key == pygame.K_t:
+                    # Toggle CRT scanline overlay
+                    scanlines_on = not scanlines_on
+                elif event.key == pygame.K_r:
+                    # Reload high scores
+                    high_scores = load_high_scores()
                     
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
@@ -400,6 +499,16 @@ def main():
         # Render the keys inside the box
         draw_text_wrap(WIN, selected_game["keys"], BODY_FONT, WHITE, card_x + 45, card_y + 325, card_w - 90)
 
+        # 4b. High Score Display for selected game
+        hs_lbl = HEADER_FONT.render("HIGH SCORE", True, GOLD)
+        WIN.blit(hs_lbl, (card_x + 30, card_y + 400))
+        game_high = high_scores.get(selected_game["name"], None)
+        if game_high is not None:
+            hs_val = HEADER_FONT.render(f"{game_high:,}", True, WHITE)
+        else:
+            hs_val = BODY_FONT.render("No score recorded yet", True, GRAY)
+        WIN.blit(hs_val, (card_x + 30, card_y + 428))
+
         # 5. Glowing Launch Button
         btn_hovered = launch_btn_rect.collidepoint(mouse_pos)
         if btn_hovered:
@@ -415,8 +524,17 @@ def main():
         WIN.blit(btn_text, (launch_btn_rect.centerx - btn_text.get_width() // 2, launch_btn_rect.centery - btn_text.get_height() // 2))
 
         # Draw footer/navigation hints
-        hint_text = BODY_FONT.render("Use Arrow Keys & Enter, or click to launch games. Press ESC to quit.", True, (80, 80, 100))
+        music_status = "ON" if music_on else "OFF"
+        scan_status = "ON" if scanlines_on else "OFF"
+        hint_text = BODY_FONT.render(
+            f"Arrows/Enter: Navigate  |  M: Music({music_status})  T: Scanlines({scan_status})  |  ESC: Quit",
+            True, (80, 80, 100)
+        )
         WIN.blit(hint_text, (WIDTH // 2 - hint_text.get_width() // 2, HEIGHT - 35))
+
+        # Apply CRT scanlines overlay last
+        if scanlines_on:
+            WIN.blit(SCANLINE_SURF, (0, 0))
 
         pygame.display.update()
 

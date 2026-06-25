@@ -2,6 +2,16 @@ import pygame
 import asyncio
 import random
 import math
+import sys
+
+try:
+    import arcade_api
+except ImportError:
+    sys.path.append("..")
+    try:
+        import arcade_api
+    except:
+        arcade_api = None
 
 pygame.init()
 
@@ -460,6 +470,7 @@ async def main():
     run = True
     clock = pygame.time.Clock()
     game = TetrisGame()
+    score_submitted = False
     
     # Timing/Gravity controls
     fall_time = 0
@@ -498,6 +509,7 @@ async def main():
                     if event.key == pygame.K_r:
                         game = TetrisGame()
                         fall_time = 0
+                        score_submitted = False
                 else:
                     if event.key in [pygame.K_UP, pygame.K_x, pygame.K_w]:
                         game.rotate_piece()
@@ -510,6 +522,11 @@ async def main():
         keys = pygame.key.get_pressed()
         now = pygame.time.get_ticks()
         
+        if game.game_over and not score_submitted:
+            score_submitted = True
+            if arcade_api:
+                arcade_api.submit_score("Tetris", game.score)
+
         if not game.game_over:
             # Horizontal Movement (with custom DAS/ARR style smooth scrolling)
             if keys[pygame.K_LEFT] or keys[pygame.K_a]:

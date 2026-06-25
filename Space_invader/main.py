@@ -3,6 +3,17 @@ import os
 import time
 import random
 import asyncio
+import sys
+
+try:
+    import arcade_api
+except ImportError:
+    sys.path.append("..")
+    try:
+        import arcade_api
+    except:
+        arcade_api = None
+
 pygame.font.init()
 
 WIDTH, HEIGHT = 900, 750
@@ -102,6 +113,7 @@ class Player(Ship):
 
     def move_lasers(self, vel, objs):
         self.cooldown()
+        hits = 0
         for laser in self.lasers:
             laser.move(vel)
             if laser.off_screen(HEIGHT):
@@ -110,8 +122,10 @@ class Player(Ship):
                 for obj in objs:
                     if laser.collision(obj):
                         objs.remove(obj)
+                        hits += 1
                         if laser in self.lasers:
                             self.lasers.remove(laser)
+        return hits
 
     def draw(self, window):
         super().draw(window)
@@ -154,6 +168,7 @@ async def main():
     FPS = 60
     level = 0
     lives = 5
+    score = 0
     main_font = pygame.font.SysFont("comicsans", 50)
     lost_font = pygame.font.SysFont("comicsans", 60)
 
@@ -176,8 +191,10 @@ async def main():
         # draw text
         lives_label = main_font.render(f"Lives: {lives}", 1, (255,255,255))
         level_label = main_font.render(f"Level: {level}", 1, (255,255,255))
+        score_label = main_font.render(f"Score: {score}", 1, (255,255,255))
 
         WIN.blit(lives_label, (10, 10))
+        WIN.blit(score_label, (WIDTH // 2 - score_label.get_width() // 2, 10))
         WIN.blit(level_label, (WIDTH - level_label.get_width() - 10, 10))
 
         for enemy in enemies:
@@ -196,7 +213,10 @@ async def main():
         redraw_window()
 
         if lives <= 0 or player.health <= 0:
-            lost = True
+            if not lost:
+                lost = True
+                if arcade_api:
+                    arcade_api.submit_score("Space Invader", score)
             lost_count += 1
 
         if lost:
@@ -243,7 +263,7 @@ async def main():
                 lives -= 1
                 enemies.remove(enemy)
 
-        player.move_lasers(-laser_vel, enemies)
+        score += player.move_lasers(-laser_vel, enemies) * 10
         await asyncio.sleep(0)
 
 async def main_menu():

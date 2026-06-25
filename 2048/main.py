@@ -3,6 +3,16 @@ import random
 import math
 import asyncio
 import os
+import sys
+
+try:
+    import arcade_api
+except ImportError:
+    sys.path.append("..")
+    try:
+        import arcade_api
+    except:
+        arcade_api = None
 
 # Initialize Pygame
 pygame.init()
@@ -152,6 +162,7 @@ class Game2048:
         self.shake_duration = 0
         self.shake_amount = 0
         self.game_over = False
+        self.score_submitted = False
         
         self.generate_initial_tiles()
 
@@ -410,6 +421,9 @@ class Game2048:
             self.spawn_new_tile()
             if self.check_lost():
                 self.game_over = True
+                if arcade_api and not self.score_submitted:
+                    self.score_submitted = True
+                    arcade_api.submit_score("2048", self.score)
 
     async def run(self):
         clock = pygame.time.Clock()

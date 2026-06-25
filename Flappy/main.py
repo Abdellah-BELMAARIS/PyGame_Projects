@@ -2,6 +2,16 @@ import pygame
 import asyncio
 import random
 import math
+import sys
+
+try:
+    import arcade_api
+except ImportError:
+    sys.path.append("..")
+    try:
+        import arcade_api
+    except:
+        arcade_api = None
 
 # Initialize Pygame
 pygame.init()
@@ -165,6 +175,7 @@ async def main():
     score = 0
     high_score = 0
     game_over = False
+    score_submitted = False
     
     shake_duration = 0
     shake_amount = 0
@@ -202,6 +213,7 @@ async def main():
                         score = 0
                         game_over = False
                         particles.clear()
+                        score_submitted = False
                 else:
                     if event.key in [pygame.K_SPACE, pygame.K_UP, pygame.K_w]:
                         bird.flap()
@@ -274,6 +286,11 @@ async def main():
                         for _ in range(15):
                             particles.append(ExplosionSpark(bird.x, bird.y, GOLD))
                         break
+
+            if game_over and not score_submitted:
+                score_submitted = True
+                if arcade_api:
+                    arcade_api.submit_score("Flappy Neon", score)
 
         # Draw
         game_surface.fill(DARK_BG)

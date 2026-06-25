@@ -135,6 +135,11 @@
                 <i class="bi bi-github"></i>
                 <span class="text-sm font-medium">Source Code</span>
             </a>
+            <!-- Music Toggle -->
+            <button id="music-btn" onclick="toggleMusic()" title="Toggle Arcade Music" class="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-neon-blue/10 hover:bg-neon-blue/20 border border-neon-blue/20 transition-colors text-neon-blue">
+                <i id="music-icon" class="bi bi-music-note-beamed text-lg"></i>
+                <span class="text-xs font-bold hidden sm:inline">MUSIC</span>
+            </button>
         </div>
     </header>
 
@@ -606,6 +611,32 @@
                     </button>
                 </div>
             </div>
+            </div>
+
+            <!-- Game 16: Neon Breakout -->
+            <div class="game-card glass-card rounded-2xl p-5 flex flex-col justify-between" data-title="Neon Breakout Breakout" data-category="ACTION" onmouseover="playHoverSound()">
+                <div>
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="w-11 h-11 rounded-xl bg-neon-orange/10 flex items-center justify-center border border-neon-orange/20 text-neon-orange text-xl">
+                            <i class="bi bi-grid-3x3-gap-fill"></i>
+                        </div>
+                        <span class="px-2 py-0.5 rounded bg-neon-orange/10 border border-neon-orange/20 text-neon-orange text-[10px] font-bold uppercase tracking-wider">Action</span>
+                    </div>
+                    <h3 class="text-lg font-bold mb-1.5 text-white">Neon Breakout</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed mb-6">
+                        Explosive brick-blasting arena. Shatter armoured and explosive brick matrices with vector balls, catch multi-ball and laser power-ups, trigger chain detonations.
+                    </p>
+                </div>
+                <div>
+                    <div class="border-t border-white/5 pt-4 mb-4 text-[10px] text-gray-500">
+                        <span class="block mb-1 font-bold text-gray-400"><i class="bi bi-keyboard mr-1"></i>Controls:</span>
+                        Left/Right Arrows or A/D (Paddle), Space / Click (Laser)
+                    </div>
+                    <button onclick="launchGame('Neon Breakout', './Breakout/build/web/')" class="w-full py-2.5 rounded-xl bg-neon-blue hover:bg-blue-600 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                        <i class="bi bi-play-fill text-base"></i>Play Wasm Build
+                    </button>
+                </div>
+            </div>
 
         </div>
     </section>
@@ -630,23 +661,9 @@
                     <span class="text-xs text-gray-500">Updated Real-Time</span>
                 </div>
                 
-                <div class="space-y-4 font-mono text-sm">
-                    <div class="flex justify-between items-center p-3 bg-white/5 border border-white/5 rounded-xl">
-                        <span class="text-neon-blue font-bold">#01 <span class="text-white ml-3 font-semibold">ABDELLEH</span></span>
-                        <span class="text-gold font-bold">2,048,000 pts <span class="text-gray-500 ml-4 text-xs">2048</span></span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-white/5 border border-white/5 rounded-xl">
-                        <span class="text-neon-purple font-bold">#02 <span class="text-white ml-3 font-semibold">NEON_PILOT</span></span>
-                        <span class="text-gray-300 font-bold">948,100 pts <span class="text-gray-500 ml-4 text-xs">Asteroids</span></span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-white/5 border border-white/5 rounded-xl">
-                        <span class="text-neon-pink font-bold">#03 <span class="text-white ml-3 font-semibold">RETRO_KING</span></span>
-                        <span class="text-gray-300 font-bold">840,200 pts <span class="text-gray-500 ml-4 text-xs">Pac-Man</span></span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-white/5 border border-white/5 rounded-xl">
-                        <span class="text-gray-500 font-bold">#04 <span class="text-white ml-3 font-semibold">CPU_MATRIX</span></span>
-                        <span class="text-gray-300 font-bold">750,000 pts <span class="text-gray-500 ml-4 text-xs">Tetris</span></span>
-                    </div>
+                <div id="leaderboard-list" class="space-y-4 font-mono text-sm">
+                    <!-- Dynamically populated by JS -->
+                    <div class="text-center text-gray-500 py-4 text-sm">Play games to record your scores!</div>
                 </div>
             </div>
         </div>
@@ -808,6 +825,141 @@
         
         // Web Audio API Sound Generator
         let audioCtx = null;
+
+        // =====================================================================
+        // CHIPTUNE SYNTH ENGINE
+        // =====================================================================
+        let chiptuneOn = false;
+        let chiptuneInterval = null;
+        let chipGainNode = null;
+        const CHIP_NOTES = [261, 329, 392, 523, 659, 523, 392, 329];
+        let chipNoteIdx = 0;
+
+        function startChiptune() {
+            initAudio();
+            if (!audioCtx || chiptuneOn) return;
+            chiptuneOn = true;
+            chipGainNode = audioCtx.createGain();
+            chipGainNode.gain.setValueAtTime(0.0, audioCtx.currentTime);
+            chipGainNode.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 0.5);
+            chipGainNode.connect(audioCtx.destination);
+            function playNextNote() {
+                if (!chiptuneOn) return;
+                let freq = CHIP_NOTES[chipNoteIdx % CHIP_NOTES.length];
+                chipNoteIdx++;
+                let osc = audioCtx.createOscillator();
+                let ng = audioCtx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                ng.gain.setValueAtTime(0.06, audioCtx.currentTime);
+                ng.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.10);
+                osc.connect(ng); ng.connect(chipGainNode);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.12);
+            }
+            playNextNote();
+            chiptuneInterval = setInterval(playNextNote, 130);
+        }
+
+        function stopChiptune() {
+            chiptuneOn = false;
+            if (chiptuneInterval) { clearInterval(chiptuneInterval); chiptuneInterval = null; }
+            if (chipGainNode) chipGainNode.gain.linearRampToValueAtTime(0.0, audioCtx.currentTime + 0.3);
+        }
+
+        function toggleMusic() {
+            if (chiptuneOn) {
+                stopChiptune();
+                document.getElementById('music-icon').className = 'bi bi-music-note text-lg opacity-40';
+            } else {
+                startChiptune();
+                document.getElementById('music-icon').className = 'bi bi-music-note-beamed text-lg';
+            }
+        }
+
+        // =====================================================================
+        // HIGH SCORE SYSTEM
+        // =====================================================================
+        const HS_KEY = 'arcade_high_scores_v2';
+        function loadHighScores() {
+            try { return JSON.parse(localStorage.getItem(HS_KEY)) || {}; } catch(e) { return {}; }
+        }
+        function saveHighScores(s) { localStorage.setItem(HS_KEY, JSON.stringify(s)); }
+        function recordScore(gameName, score) {
+            let s = loadHighScores();
+            if (!s[gameName] || score > s[gameName]) { s[gameName] = score; saveHighScores(s); renderLeaderboard(); }
+        }
+
+        const RANK_COLORS = ['text-neon-blue','text-neon-purple','text-neon-pink','text-gray-400','text-gray-500'];
+        function renderLeaderboard() {
+            const scores = loadHighScores();
+            const list = document.getElementById('leaderboard-list');
+            if (!list) return;
+            const entries = Object.entries(scores).sort((a,b) => b[1]-a[1]).slice(0,8);
+            if (entries.length === 0) {
+                list.innerHTML = '<div class="text-center text-gray-500 py-4 text-sm">Play games to record your scores!</div>';
+                return;
+            }
+            list.innerHTML = entries.map(([game, score], i) => {
+                const rc = RANK_COLORS[Math.min(i, RANK_COLORS.length-1)];
+                const rn = String(i+1).padStart(2,'0');
+                return `<div class="flex justify-between items-center p-3 bg-white/5 border border-white/5 rounded-xl">
+                    <span class="${rc} font-bold">#${rn} <span class="text-white ml-3 font-semibold font-sans">YOU</span></span>
+                    <span class="text-gray-300 font-bold">${score.toLocaleString()} pts <span class="text-gray-500 ml-4 text-xs">${game}</span></span>
+                </div>`;
+            }).join('');
+        }
+
+        // Score message listener from game iframes
+        window.addEventListener('message', function(e) {
+            try {
+                const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+                if (d && d.type === 'ARCADE_SCORE' && d.game && typeof d.score === 'number') {
+                    recordScore(d.game, d.score);
+                    stats.lastPlayed = d.game; saveStats(); updateStatsUI();
+                }
+            } catch(err) {}
+        });
+
+        // =====================================================================
+        // GAMEPAD API
+        // =====================================================================
+        const GP_BUTTON_MAP = {12:'ArrowUp',13:'ArrowDown',14:'ArrowLeft',15:'ArrowRight',0:' ',1:'Control',9:'Enter',8:'Escape'};
+        const gpPrev = {};
+        function dispatchToIframe(key, type) {
+            if (!iframe || !iframe.contentWindow) return;
+            try { iframe.contentWindow.dispatchEvent(new KeyboardEvent(type,{key,bubbles:true,cancelable:true})); } catch(err) {}
+            if (key===' ') { btnA.classList.toggle('scale-90',type==='keydown'); btnA.classList.toggle('bg-neon-pink',type==='keydown'); }
+            if (key==='Control') { btnB.classList.toggle('scale-90',type==='keydown'); btnB.classList.toggle('bg-neon-blue',type==='keydown'); }
+            const sm = {ArrowLeft:'translate(-15px,0)',ArrowRight:'translate(15px,0)',ArrowUp:'translate(0,-15px)',ArrowDown:'translate(0,15px)'};
+            if (sm[key]) virtualStick.style.transform = type==='keydown' ? sm[key] : 'translate(0,0)';
+        }
+        function pollGamepads() {
+            const gps = navigator.getGamepads ? navigator.getGamepads() : [];
+            for (let gp of gps) {
+                if (!gp) continue;
+                if (!gpPrev[gp.index]) gpPrev[gp.index] = {};
+                for (let [bi, key] of Object.entries(GP_BUTTON_MAP)) {
+                    const pr = gp.buttons[bi] && gp.buttons[bi].pressed;
+                    const wa = gpPrev[gp.index][bi];
+                    if (pr && !wa) dispatchToIframe(key,'keydown');
+                    if (!pr && wa) dispatchToIframe(key,'keyup');
+                    gpPrev[gp.index][bi] = pr;
+                }
+                const ax=gp.axes[0]||0, ay=gp.axes[1]||0, t=0.5;
+                const axes = {left:ax<-t,right:ax>t,up:ay<-t,down:ay>t};
+                const am = {left:'ArrowLeft',right:'ArrowRight',up:'ArrowUp',down:'ArrowDown'};
+                for (let [d,active] of Object.entries(axes)) {
+                    const wa = gpPrev[gp.index]['ax_'+d];
+                    if (active && !wa) dispatchToIframe(am[d],'keydown');
+                    if (!active && wa) dispatchToIframe(am[d],'keyup');
+                    gpPrev[gp.index]['ax_'+d] = active;
+                }
+            }
+            requestAnimationFrame(pollGamepads);
+        }
+        requestAnimationFrame(pollGamepads);
+        renderLeaderboard();
         function initAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();

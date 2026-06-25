@@ -2,6 +2,16 @@ import pygame
 import asyncio
 import random
 import math
+import sys
+
+try:
+    import arcade_api
+except ImportError:
+    sys.path.append("..")
+    try:
+        import arcade_api
+    except:
+        arcade_api = None
 
 # Initialize Pygame
 pygame.init()
@@ -181,6 +191,7 @@ async def main():
     score = 0
     lives = 3
     game_over = False
+    score_submitted = False
     
     shake_duration = 0
     shake_amount = 0
@@ -226,6 +237,7 @@ async def main():
                         game_over = False
                         particles.clear()
                         lasers.clear()
+                        score_submitted = False
                 else:
                     if event.key == pygame.K_SPACE and ship.alive:
                         # Shoot laser
@@ -324,6 +336,11 @@ async def main():
                 spawn_initial()
                 # Extra score
                 score += 100
+
+        if game_over and not score_submitted:
+            score_submitted = True
+            if arcade_api:
+                arcade_api.submit_score("Neon Asteroids", score)
 
         # Draw Scene
         game_surface.fill(DARK_BG)

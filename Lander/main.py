@@ -3,6 +3,16 @@ import asyncio
 import random
 import math
 import os
+import sys
+
+try:
+    import arcade_api
+except ImportError:
+    sys.path.append("..")
+    try:
+        import arcade_api
+    except:
+        arcade_api = None
 
 # Initialize Pygame
 pygame.init()
@@ -203,6 +213,7 @@ async def main():
     status_message = "PILOT THE LANDER TO A CYAN PAD"
     status_color = NEON_BLUE
     game_over = False
+    score_submitted = False
     
     shake_duration = 0
     shake_amount = 0
@@ -233,6 +244,7 @@ async def main():
                         status_color = NEON_BLUE
                         game_over = False
                         particles.clear()
+                        score_submitted = False
 
         # Keyboard polling
         keys = pygame.key.get_pressed()
@@ -359,6 +371,13 @@ async def main():
         game_surface.blit(vx_txt, (WIDTH - 180, 25))
         game_surface.blit(vy_txt, (WIDTH - 180, 50))
         game_surface.blit(angle_txt, (WIDTH - 180, 75))
+
+        if (game_over or lander.landed) and not score_submitted:
+            score_submitted = True
+            if arcade_api:
+                # 500 bonus points for landing successfully + remaining fuel
+                final_score = (500 + int(lander.fuel)) if lander.landed else 0
+                arcade_api.submit_score("Neon Lander", final_score)
 
         # Game Over Banner
         if game_over or lander.landed:

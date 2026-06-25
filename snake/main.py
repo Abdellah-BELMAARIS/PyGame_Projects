@@ -189,13 +189,20 @@ def draw_grid(surface):
 
 def submit_score(score):
     print(f"Game over. Final Score: {score}")
-    if platform.system() == 'Emscripten':
+    import sys
+    try:
+        import arcade_api
+    except ImportError:
+        sys.path.append("..")
         try:
-            import window
-            window.submitGameScore("snake", score)
-            print("Score submitted to platform via Emscripten bridge.")
-        except Exception as e:
-            print(f"Error submitting score: {e}")
+            import arcade_api
+        except ImportError:
+            arcade_api = None
+
+    if arcade_api:
+        arcade_api.submit_score("Snake", score)
+    else:
+        print("[Snake] arcade_api not found, score not submitted.")
 
 async def main():
     run = True
