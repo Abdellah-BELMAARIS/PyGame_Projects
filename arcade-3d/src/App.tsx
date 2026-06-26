@@ -476,13 +476,22 @@ export default function App() {
         
         {/* Header Branding */}
         <div>
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="w-9 h-9 rounded-xl bg-gradient-arcade flex items-center justify-center shadow-lg">
-              <Gamepad2 className="w-5 h-5 text-white" />
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-arcade flex items-center justify-center shadow-lg">
+                <Gamepad2 className="w-5 h-5 text-white" />
+              </div>
+              <span className="font-extrabold text-lg tracking-wider text-white">
+                NEON<span className="text-neon-blue">ARCADE</span>
+              </span>
             </div>
-            <span className="font-extrabold text-lg tracking-wider text-white">
-              NEON<span className="text-neon-blue">ARCADE</span>
-            </span>
+            <a
+              href="https://abdellah-belmaaris.github.io/"
+              className="text-[10px] px-2 py-1 rounded-md border border-white/10 text-gray-400 hover:text-white hover:border-neon-blue transition-all font-bold uppercase tracking-wider"
+              id="back-to-portfolio-link"
+            >
+              PORTFOLIO
+            </a>
           </div>
 
           {/* Scrollable Game List */}
