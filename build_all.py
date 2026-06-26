@@ -52,7 +52,7 @@ ARCADE_API_SRC = os.path.join(ROOT, "arcade_api.py")
 def copy_arcade_api(game_dir):
     dst = os.path.join(game_dir, "arcade_api.py")
     shutil.copy2(ARCADE_API_SRC, dst)
-    print(f"  [API] Copied arcade_api.py → {dst}")
+    print(f"  [API] Copied arcade_api.py -> {dst}")
 
 
 def build_game(game_name, cdn_url):
@@ -79,7 +79,7 @@ def build_game(game_name, cdn_url):
     built_index = os.path.join(game_dir, "build", "web", "index.html")
     if os.path.exists(built_index):
         patch_cdn(built_index, cdn_url)
-        print(f"  [CDN]   Patched CDN → {cdn_url} in {built_index}")
+        print(f"  [CDN]   Patched CDN -> {cdn_url} in {built_index}")
     else:
         print(f"  [WARN]  Built index.html not found at {built_index}")
 
@@ -110,6 +110,12 @@ def package_dist():
     # Copy root index.html
     shutil.copy2(os.path.join(ROOT, "index.html"), os.path.join(dist_dir, "index.html"))
     print("  [COPY] index.html")
+
+    # Copy assets/ folder if it exists (3D React App assets)
+    assets_src = os.path.join(ROOT, "assets")
+    if os.path.exists(assets_src):
+        shutil.copytree(assets_src, os.path.join(dist_dir, "assets"))
+        print("  [COPY] assets/")
 
     # Copy local CDN assets
     cdn_src = os.path.join(ROOT, "cdn")

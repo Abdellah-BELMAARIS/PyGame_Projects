@@ -2,6 +2,17 @@ import pygame
 import asyncio
 import random
 import math
+import sys
+import os
+
+try:
+    import arcade_api
+except ImportError:
+    sys.path.append("..")
+    try:
+        import arcade_api
+    except:
+        arcade_api = None
 
 # Initialize Pygame
 pygame.init()
@@ -309,6 +320,7 @@ class PacmanGame:
         self.lives = 3
         self.level = 1
         self.game_over = False
+        self.score_submitted = False
         self.scared_timer = 0
         
         self.shake_duration = 0
@@ -509,6 +521,11 @@ async def main():
 
         # Draw Game Over Banner
         if game.game_over:
+            if not game.score_submitted:
+                game.score_submitted = True
+                if arcade_api:
+                    arcade_api.submit_score("Neon Pac-Man", game.score)
+            
             overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
             pygame.draw.rect(overlay, (5, 5, 12, 210), (0, 0, WIDTH, HEIGHT))
             game_surface.blit(overlay, (0, 0))

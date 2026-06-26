@@ -1,0 +1,12 @@
+# Local high scores
+high_scores.json
+
+# Python virtual environment and cache
+.venv/
+__pycache__/
+*.pyc
+
+# IDEs and editors
+.idea/
+.vscode/
+.DS_Store

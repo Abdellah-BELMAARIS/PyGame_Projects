@@ -296,8 +296,13 @@ def main():
 
     launch_btn_rect = pygame.Rect(card_x + 30, card_y + card_h - 90, card_w - 60, 55)
 
+    frame_count = 0
+
     while run:
         clock.tick(FPS)
+        frame_count += 1
+        if frame_count % 120 == 0:
+            high_scores = load_high_scores()
         mouse_pos = pygame.mouse.get_pos()
         mouse_clicked = False
 

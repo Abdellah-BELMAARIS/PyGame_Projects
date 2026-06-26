@@ -4,6 +4,16 @@ import random
 import asyncio
 import math
 import os
+import sys
+
+try:
+    import arcade_api
+except ImportError:
+    sys.path.append("..")
+    try:
+        import arcade_api
+    except:
+        arcade_api = None
 
 pygame.font.init()
 
@@ -198,6 +208,8 @@ async def main():
     debris_particles = []
     
     hit = False
+    score = 0
+    score_submitted = False
     high_score = load_high_score()
     
     # Screen shake variables
@@ -320,10 +332,16 @@ async def main():
         pygame.draw.line(game_surface, CYAN, (0, 50), (WIDTH, 50), 2)
 
         # Draw elapsed time as score
-        score = int(elapsed_time * 10) if not hit else int(start_time - start_time) # freeze score on hit
-        if score > high_score:
-            high_score = score
-            save_high_score(high_score)
+        if not hit:
+            score = int(elapsed_time * 10)
+            if score > high_score:
+                high_score = score
+                save_high_score(high_score)
+        else:
+            if not score_submitted:
+                score_submitted = True
+                if arcade_api:
+                    arcade_api.submit_score("Space Dodge", score)
 
         score_text = FONT.render(f"SCORE: {score}", 1, CYAN)
         high_score_text = FONT.render(f"HIGH SCORE: {high_score}", 1, GOLD)
@@ -360,6 +378,7 @@ async def main():
                 start_time = time.time()
                 star_add_increment = 2000
                 star_count = 0
+                score_submitted = False
 
         # Handle Screen Shake Offset
         if shake_duration > 0:

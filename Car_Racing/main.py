@@ -4,7 +4,17 @@ import math
 import asyncio
 import random
 import os
+import sys
 from utils import scale_image, blit_rotate_center
+
+try:
+    import arcade_api
+except ImportError:
+    sys.path.append("..")
+    try:
+        import arcade_api
+    except:
+        arcade_api = None
 
 # Initialize Pygame
 pygame.init()
@@ -108,6 +118,7 @@ class GameInfo:
         self.level = level
         self.started = False
         self.level_start_time = 0
+        self.score = 0
 
     def next_level(self):
         self.level += 1
@@ -117,6 +128,7 @@ class GameInfo:
         self.level = 1
         self.started = False
         self.level_start_time = 0
+        self.score = 0
 
     def game_finished(self):
         return self.level > self.LEVELS
@@ -262,7 +274,7 @@ class ComputerCar(AbstractCar):
 
 def draw_hud(win, player_car, game_info):
     # Modern Glassmorphic HUD Card at top-left
-    hud_w, hud_h = 220, 120
+    hud_w, hud_h = 220, 150
     hud_x, hud_y = 20, 20
     
     hud_surf = pygame.Surface((hud_w, hud_h), pygame.SRCALPHA)
@@ -287,6 +299,12 @@ def draw_hud(win, player_car, game_info):
     speed_val = HUD_VAL_FONT.render(f"{int(player_car.vel * 45)} KM/H", True, WHITE)
     win.blit(speed_lbl, (hud_x + 15, hud_y + 76))
     win.blit(speed_val, (hud_x + 130, hud_y + 74))
+
+    # 4. Score label
+    score_lbl = MAIN_FONT.render("ARCADE SCORE", True, NEON_BLUE)
+    score_val = HUD_VAL_FONT.render(str(game_info.score), True, WHITE)
+    win.blit(score_lbl, (hud_x + 15, hud_y + 108))
+    win.blit(score_val, (hud_x + 130, hud_y + 106))
 
 
 def draw(win, images, player_car, computer_car, game_info, smoke_particles, spark_particles):
@@ -390,7 +408,10 @@ async def handle_collision(player_car, computer_car, game_info, spark_particles,
         state_bag["shake_duration"] = 25
         state_bag["shake_amount"] = 10
         
-        draw_game_overlay(WIN, "LAP FAILED", "COMPUTER WON THE LAP. RESETTING GAME...", NEON_PINK)
+        if game_info.score > 0 and arcade_api:
+            arcade_api.submit_score("Car Racing", game_info.score)
+            
+        draw_game_overlay(WIN, "LAP FAILED", f"COMPUTER WON. FINAL SCORE: {game_info.score}. RESETTING...", NEON_PINK)
         await asyncio.sleep(4)
         
         game_info.reset()
@@ -407,12 +428,22 @@ async def handle_collision(player_car, computer_car, game_info, spark_particles,
             state_bag["shake_duration"] = 20
             state_bag["shake_amount"] = 8
             
+            # Calculate lap score
+            time_taken = time.time() - game_info.level_start_time
+            time_bonus = max(0, 1000 - int(time_taken) * 15)
+            lap_score = 1000 + time_bonus
+            game_info.score += lap_score
+            
             if game_info.level == game_info.LEVELS:
-                draw_game_overlay(WIN, "GRAND PRIX CHAMPION", "YOU WON THE ENTIRE ARCADE CUP!", GOLD)
+                # Victory bonus
+                game_info.score += 5000
+                if arcade_api:
+                    arcade_api.submit_score("Car Racing", game_info.score)
+                draw_game_overlay(WIN, "GRAND PRIX CHAMPION", f"YOU WON THE CUP! FINAL SCORE: {game_info.score}", GOLD)
                 await asyncio.sleep(5)
                 game_info.reset()
             else:
-                draw_game_overlay(WIN, "LAP COMPLETE!", f"LEVEL {game_info.level} CLEARED. PREPARING NEXT...", NEON_GREEN)
+                draw_game_overlay(WIN, "LAP COMPLETE!", f"LAP SCORE: +{lap_score} | LEVEL {game_info.level} CLEARED...", NEON_GREEN)
                 await asyncio.sleep(3)
                 game_info.next_level()
                 

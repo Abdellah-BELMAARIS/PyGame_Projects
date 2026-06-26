@@ -1,10 +1,21 @@
 import os
+import sys
 import random
 import math
 import pygame
 import asyncio
+import time
 from os import listdir
 from os.path import isfile, join
+
+try:
+    import arcade_api
+except ImportError:
+    sys.path.append("..")
+    try:
+        import arcade_api
+    except:
+        arcade_api = None
 
 # Initialize Pygame
 pygame.init()
@@ -479,6 +490,8 @@ async def main(window):
     }
     
     start_time = time.time()
+    score_submitted = False
+    final_score = 0
     run = True
     
     prev_y_vel = 0
@@ -526,6 +539,7 @@ async def main(window):
                         objects[-1] = fire
                         offset_x = 0
                         start_time = time.time()
+                        score_submitted = False
                         dust_particles.clear()
                         ember_particles.clear()
                         explosion_particles.clear()
@@ -571,7 +585,12 @@ async def main(window):
         # Render scene
         # Check game over state
         if player.lives <= 0:
-            draw_game_overlay(window, "SYSTEM OFFLINE", "CORE DEPLETED. PRESS 'R' TO RESTART.", NEON_PINK)
+            if not score_submitted:
+                score_submitted = True
+                final_score = int(time.time() - start_time)
+                if arcade_api:
+                    arcade_api.submit_score("Platformer", final_score)
+            draw_game_overlay(window, "SYSTEM OFFLINE", f"CORE DEPLETED. SURVIVED {final_score}s. PRESS 'R' TO RESTART.", NEON_PINK)
         else:
             # Handle screen shake
             if state_bag["shake_duration"] > 0:
