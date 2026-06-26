@@ -625,7 +625,7 @@ export default function App() {
             onClick={handleLaunchGame}
             className="w-full py-4 rounded-xl bg-gradient-arcade bg-gradient-arcade-hover transition-all duration-300 flex items-center justify-center gap-2 font-black tracking-wider text-sm shadow-arcade hover:scale-[1.02] active:scale-[0.98] text-white"
           >
-            <Play className="w-4 h-4 fill-white" /> COPLAND CO-BOOT SCREEN
+            <Play className="w-4 h-4 fill-white" /> LAUNCH CABINET
           </button>
         </div>
 
