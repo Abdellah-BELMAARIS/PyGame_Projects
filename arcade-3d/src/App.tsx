@@ -559,10 +559,10 @@ export default function App() {
       {/* ========================================== */}
       {/* RIGHT SIDE PANEL: DETAILS CARD */}
       {/* ========================================== */}
-      <div className={`absolute right-0 top-0 bottom-0 w-[420px] z-10 transition-transform duration-500 p-6 flex flex-col justify-between border-l border-white/5 bg-slate-950/40 backdrop-blur-xl ${isActive || isLaunching ? 'translate-x-full' : 'translate-x-0'}`}>
+      <div className={`absolute right-0 top-0 bottom-0 w-[420px] z-10 transition-transform duration-500 p-5 flex flex-col justify-between border-l border-white/5 bg-slate-950/40 backdrop-blur-xl ${isActive || isLaunching ? 'translate-x-full' : 'translate-x-0'}`}>
         
         {/* Game Details Area */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div>
             <h1 className="font-extrabold text-3xl tracking-tight text-white mb-2 leading-tight">
               {selectedGame.name}
@@ -623,7 +623,7 @@ export default function App() {
           {/* Launch Button */}
           <button
             onClick={handleLaunchGame}
-            className="w-full py-4 rounded-xl bg-gradient-arcade bg-gradient-arcade-hover transition-all duration-300 flex items-center justify-center gap-2 font-black tracking-wider text-sm shadow-arcade hover:scale-[1.02] active:scale-[0.98] text-white"
+            className="w-full py-3 rounded-xl bg-gradient-arcade bg-gradient-arcade-hover transition-all duration-300 flex items-center justify-center gap-2 font-black tracking-wider text-sm shadow-arcade hover:scale-[1.02] active:scale-[0.98] text-white"
           >
             <Play className="w-4 h-4 fill-white" /> LAUNCH CABINET
           </button>

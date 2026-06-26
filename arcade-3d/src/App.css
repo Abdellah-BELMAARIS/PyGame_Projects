@@ -466,3 +466,17 @@ body {
     opacity: 0;
   }
 }
+
+/* Extra scrollability & button spacing utilities */
+.overflow-y-auto {
+  overflow-y: auto;
+}
+
+.pr-1 {
+  padding-right: 0.25rem;
+}
+
+.py-3 {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
