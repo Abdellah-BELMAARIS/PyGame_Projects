@@ -291,7 +291,7 @@ KOOPA_MAT = [
     "..GGYYGGGGYYGG..",
     "..GYYYYGGYYYYG..",
     ".GGYYYYGGYYYYGG.",
-    ".GGYSYGGYSYGG.",
+    "..GGYSYGGYSYGG..",
     "GGYYYYYYYYYYYYGG",
     "GGYGGYGGYGGYGGYY",
     "GGGGGGGGGGGGGGGG",
@@ -1043,6 +1043,10 @@ class Flagpole:
         self.y = y
         self.width = 16
         self.height = 400
+        self.type = "flagpole"
+
+    def update(self):
+        pass
 
     def get_rect(self):
         return pygame.Rect(self.x, self.y, self.width, self.height)
@@ -1066,6 +1070,13 @@ class Castle:
         self.y = y
         self.width = 120
         self.height = 160
+        self.type = "castle"
+
+    def update(self):
+        pass
+
+    def get_rect(self):
+        return pygame.Rect(self.x, self.y, self.width, self.height)
 
     def draw(self, surf, offset_x):
         rx = self.x - offset_x
@@ -1088,6 +1099,10 @@ class AxeButton:
         self.width = 30
         self.height = 40
         self.triggered = False
+        self.type = "axe_button"
+
+    def update(self):
+        pass
 
     def get_rect(self):
         return pygame.Rect(self.x, self.y, self.width, self.height)
