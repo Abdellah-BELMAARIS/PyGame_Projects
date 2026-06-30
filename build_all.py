@@ -44,6 +44,7 @@ GAMES = [
     "Lander",
     "Minesweeper",
     "Breakout",
+    "Mario",
 ]
 
 ARCADE_API_SRC = os.path.join(ROOT, "arcade_api.py")

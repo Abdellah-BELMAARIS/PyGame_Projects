@@ -178,6 +178,14 @@ GAMES = [
         "cat": "ACTION",
         "desc": "Explosive brick-blasting arena. Launch glowing vector balls at armoured and explosive brick matrices, grab power-ups to trigger multi-ball cores and laser cannons.",
         "keys": "Left/Right Arrows or A/D (Paddle), Space / Click (Laser Fire)"
+    },
+    {
+        "name": "Neon Mario Bros",
+        "path": "Mario/main.py",
+        "dir": "Mario",
+        "cat": "ACTION",
+        "desc": "Procedurally generated retro-modern Mario platformer. Complete 20 levels of jumping, coin collecting, brick-bumping, and face the final Bowser boss battle!",
+        "keys": "Arrows/WASD (Move), Space/Up/W (Jump), C/Shift (Fireballs)"
     }
 ]
 

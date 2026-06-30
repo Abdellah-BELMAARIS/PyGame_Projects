@@ -96,6 +96,38 @@ export const VirtualGamepad: React.FC<VirtualGamepadProps> = ({
   // Layout selection based on game
   const normalizedDir = gameDir.toLowerCase();
 
+  // 0. Mario Layout
+  if (normalizedDir === 'mario') {
+    return (
+      <div className="w-full flex justify-between items-center px-6 py-4 select-none touch-none">
+        {/* D-Pad on Left */}
+        {renderDPad({ up: true, down: true, left: true, right: true })}
+
+        {/* Action Buttons on Right */}
+        <div className="flex gap-4 items-center mr-2">
+          <div className="flex flex-col items-center gap-1">
+            <button
+              {...buttonProps('KeyC')}
+              className="w-14 h-14 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center font-bold text-gray-300 text-sm active:scale-90 active:bg-slate-700 transition-all outline-none shadow-md"
+            >
+              FIRE
+            </button>
+            <span className="text-[9px] text-gray-500 font-bold uppercase">C Key</span>
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            <button
+              {...buttonProps('Space')}
+              className="w-18 h-18 rounded-full bg-gradient-arcade border border-white/20 flex items-center justify-center font-black text-white text-base active:scale-90 active:brightness-110 transition-all outline-none shadow-arcade"
+            >
+              JUMP
+            </button>
+            <span className="text-[9px] text-gray-500 font-bold uppercase">Space</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // 1. Minesweeper Layout
   if (normalizedDir === 'minesweeper') {
     return (
