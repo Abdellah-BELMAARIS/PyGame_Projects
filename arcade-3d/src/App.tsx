@@ -12,9 +12,11 @@ import {
   X, 
   Activity, 
   Thermometer, 
-  Layers
+  Layers,
+  Search
 } from 'lucide-react';
 import { Cabinet3D } from './components/Cabinet3D';
+import { VirtualGamepad } from './components/VirtualGamepad';
 import './App.css';
 
 // Game Database (All 16 Cabinet Classics)
@@ -266,12 +268,146 @@ export default function App() {
     memoryUsed: 1.8,
   });
 
+  // Mobile-specific states
+  const [isMobile, setIsMobile] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('ALL');
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [flagMode, setFlagMode] = useState(false);
+  const [showStatsModal, setShowStatsModal] = useState(false);
+
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const flagModeRef = useRef(false);
+
+  useEffect(() => {
+    flagModeRef.current = flagMode;
+  }, [flagMode]);
+
+  // Mobile viewport detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent));
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const selectedGame = GAMES[selectedIndex];
 
   // Resolve dev/prod paths to local WASM builds of games
   const getGameIframeUrl = (gameDir: string) => {
     const isDev = import.meta.env.DEV;
     return isDev ? `../${gameDir}/build/web/index.html` : `./${gameDir}/build/web/index.html`;
+  };
+
+  // Keyboard Event Dispatcher for virtual gamepad
+  const sendKeyEvent = (key: string, type: 'keydown' | 'keyup') => {
+    if (!iframeRef.current) return;
+    try {
+      const iframe = iframeRef.current;
+      const targetWindow = iframe.contentWindow;
+      if (!targetWindow) return;
+      const targetDoc = targetWindow.document;
+
+      const keyMappings: Record<string, { key?: string; code: string; keyCode: number }> = {
+        'ArrowUp': { code: 'ArrowUp', keyCode: 38 },
+        'ArrowDown': { code: 'ArrowDown', keyCode: 40 },
+        'ArrowLeft': { code: 'ArrowLeft', keyCode: 37 },
+        'ArrowRight': { code: 'ArrowRight', keyCode: 39 },
+        'Space': { key: ' ', code: 'Space', keyCode: 32 },
+        'KeyW': { key: 'w', code: 'KeyW', keyCode: 87 },
+        'KeyS': { key: 's', code: 'KeyS', keyCode: 83 },
+        'KeyA': { key: 'a', code: 'KeyA', keyCode: 65 },
+        'KeyD': { key: 'd', code: 'KeyD', keyCode: 68 },
+        'KeyC': { key: 'c', code: 'KeyC', keyCode: 67 },
+        'Shift': { code: 'ShiftLeft', keyCode: 16 },
+        'Control': { code: 'ControlLeft', keyCode: 17 },
+        'ControlLeft': { code: 'ControlLeft', keyCode: 17 },
+        'ControlRight': { code: 'ControlRight', keyCode: 17 },
+        'KeyR': { key: 'r', code: 'KeyR', keyCode: 82 }
+      };
+
+      const mapping = keyMappings[key] || { key, code: key, keyCode: 0 };
+      const eventKey = mapping.key !== undefined ? mapping.key : key;
+
+      const event = new KeyboardEvent(type, {
+        key: eventKey,
+        code: mapping.code,
+        keyCode: mapping.keyCode,
+        which: mapping.keyCode,
+        bubbles: true,
+        cancelable: true,
+        view: targetWindow as any
+      });
+
+      targetDoc.dispatchEvent(event);
+      if (targetDoc.activeElement) {
+        targetDoc.activeElement.dispatchEvent(event);
+      }
+    } catch (err) {
+      console.error("Failed to send key event:", err);
+    }
+  };
+
+  // Iframe loaded callback: sets focus and intercepts Minesweeper right-clicks
+  const handleIframeLoad = () => {
+    if (!iframeRef.current) return;
+    const iframe = iframeRef.current;
+    try {
+      const iframeWindow = iframe.contentWindow;
+      const iframeDoc = iframeWindow?.document;
+      if (!iframeDoc) return;
+
+      // Focus the iframe so it captures keyboard events immediately
+      iframeWindow.focus();
+
+      // Intercept clicks in Minesweeper to simulate right clicks for flagging
+      if (selectedGame.dir === 'Minesweeper') {
+        const handleMouseDown = (e: MouseEvent) => {
+          if (flagModeRef.current && e.button === 0) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const clientX = e.clientX;
+            const clientY = e.clientY;
+
+            // Dispatch right-click mousedown
+            const rightDown = new MouseEvent('mousedown', {
+              bubbles: true,
+              cancelable: true,
+              view: iframeWindow as any,
+              button: 2,
+              buttons: 2,
+              clientX,
+              clientY,
+              screenX: e.screenX,
+              screenY: e.screenY
+            });
+            e.target?.dispatchEvent(rightDown);
+
+            // Dispatch right-click mouseup
+            const rightUp = new MouseEvent('mouseup', {
+              bubbles: true,
+              cancelable: true,
+              view: iframeWindow as any,
+              button: 2,
+              buttons: 0,
+              clientX,
+              clientY,
+              screenX: e.screenX,
+              screenY: e.screenY
+            });
+            e.target?.dispatchEvent(rightUp);
+          }
+        };
+
+        iframeDoc.addEventListener('mousedown', handleMouseDown, true);
+        iframeDoc.addEventListener('contextmenu', (e) => e.preventDefault());
+      }
+    } catch (err) {
+      console.error("Failed to setup iframe event interception:", err);
+    }
   };
 
   // Load High Scores and Telemetry on boot
@@ -386,11 +522,12 @@ export default function App() {
     }
   };
 
-  // Launching transition slerp
+  // Launching transition
   const handleLaunchGame = () => {
     if (isLaunching || isActive) return;
     setIsLaunching(true);
     setAutoRotate(false);
+    setIsDetailOpen(false); // Close mobile detail panel if open
     
     // Simulate zooming into screen before showing iframe overlay
     setTimeout(() => {
@@ -429,6 +566,314 @@ export default function App() {
     }
   })();
 
+  const CATEGORIES = ['ALL', 'RETRO', 'PUZZLE', 'SURVIVAL', 'SHOOTER', 'VERSUS', 'ACTION', 'BOARD'];
+
+  const filteredGames = GAMES.filter((game) => {
+    const matchesCategory = activeCategory === 'ALL' || game.cat.toUpperCase() === activeCategory;
+    const matchesSearch =
+      game.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      game.desc.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  // =====================================================================
+  // MOBILE RENDER VIEW
+  // =====================================================================
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-screen w-screen bg-cabinet-dark font-sans antialiased text-gray-100 select-none relative overflow-hidden">
+        
+        {/* Confetti container inside gameplay */}
+        <div id="confetti-container" className="absolute inset-0 z-50 pointer-events-none overflow-hidden"></div>
+
+        {/* Mobile Header (Only visible when game is not active) */}
+        {!isActive && (
+          <header className="px-4 py-3 flex items-center justify-between border-b border-white/5 bg-slate-950/40 backdrop-blur-md z-10">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-8 h-8 rounded-lg bg-gradient-arcade flex items-center justify-center shadow-md">
+                <Gamepad2 className="w-4.5 h-4.5 text-white" />
+              </div>
+              <span className="font-extrabold text-base tracking-wider text-white">
+                NEON<span className="text-neon-blue">ARCADE</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowStatsModal(true)}
+                className="p-1.5 rounded-lg border border-white/5 bg-white/2 hover:bg-white/5 text-gray-300"
+              >
+                <Activity className="w-4 h-4 text-neon-blue" />
+              </button>
+              <a
+                href="https://abdellah-belmaaris.github.io/"
+                className="text-[9px] px-2 py-1.5 rounded-md border border-white/10 text-gray-400 font-bold uppercase tracking-wider"
+              >
+                Portfolio
+              </a>
+            </div>
+          </header>
+        )}
+
+        {/* Mobile Dashboard (Games Grid + Search) */}
+        {!isActive && (
+          <main className="flex-1 overflow-y-auto p-4 space-y-4 pb-12">
+            {/* Search input */}
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-500" />
+              <input
+                type="text"
+                placeholder="Search retro classics..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-slate-900/60 border border-white/5 rounded-xl py-2 pl-9 pr-4 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-neon-blue transition-all"
+              />
+            </div>
+
+            {/* Category pills */}
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+              {CATEGORIES.map((cat) => {
+                const active = cat === activeCategory;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    className={`text-[10px] px-3 py-1.5 rounded-lg border font-bold uppercase tracking-wide whitespace-nowrap transition-all ${
+                      active
+                        ? 'bg-gradient-arcade border-transparent text-white shadow-neon-blue-sm'
+                        : 'bg-white/2 border-white/5 text-gray-400'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Game Cards Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              {filteredGames.map((game) => {
+                const originalIndex = GAMES.findIndex((g) => g.name === game.name);
+                const isSelected = originalIndex === selectedIndex;
+                
+                // Fetch category colors
+                let borderGlow = 'border-white/5 shadow-none';
+                if (isSelected) {
+                  if (game.cat === 'PUZZLE') borderGlow = 'border-amber-500/80 shadow-[0_0_10px_rgba(251,191,36,0.25)]';
+                  else if (game.cat === 'SURVIVAL') borderGlow = 'border-orange-500/80 shadow-[0_0_10px_rgba(249,115,22,0.25)]';
+                  else if (game.cat === 'RETRO' || game.cat === 'BOARD') borderGlow = 'border-emerald-500/80 shadow-[0_0_10px_rgba(52,211,153,0.25)]';
+                  else if (game.cat === 'SHOOTER' || game.cat === 'VERSUS') borderGlow = 'border-pink-500/80 shadow-[0_0_10px_rgba(236,72,153,0.25)]';
+                  else borderGlow = 'border-sky-500/80 shadow-[0_0_10px_rgba(56,189,248,0.25)]';
+                }
+
+                return (
+                  <button
+                    key={game.name}
+                    onClick={() => {
+                      setSelectedIndex(originalIndex);
+                      setIsDetailOpen(true);
+                    }}
+                    className={`p-3 rounded-xl border bg-slate-900/40 text-left flex flex-col justify-between h-32 transition-all duration-300 ${borderGlow}`}
+                  >
+                    <div>
+                      <div className="flex justify-between items-start mb-1.5">
+                        <span className={`text-[8px] px-1.5 py-0.5 rounded border font-black tracking-wide ${getCSSCategoryColor(game.cat)}`}>
+                          {game.cat}
+                        </span>
+                        {highScores[game.name] && (
+                          <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+                        )}
+                      </div>
+                      <h3 className="font-extrabold text-sm text-white tracking-tight line-clamp-1">
+                        {game.name}
+                      </h3>
+                      <p className="text-[10px] text-gray-400 line-clamp-2 leading-relaxed mt-1 font-light">
+                        {game.desc}
+                      </p>
+                    </div>
+
+                    <div className="text-[9px] text-gray-500 font-mono flex justify-between items-center w-full pt-1.5 border-t border-white/5">
+                      <span>HI SCORE:</span>
+                      <span className="text-yellow-400 font-bold">
+                        {highScores[game.name] !== undefined ? highScores[game.name] : '0'}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {filteredGames.length === 0 && (
+              <div className="text-center py-12 text-gray-500 text-xs">
+                No games found matching "{searchQuery}"
+              </div>
+            )}
+          </main>
+        )}
+
+        {/* Mobile Game Details Bottom Drawer */}
+        {isDetailOpen && !isActive && (
+          <div className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm flex items-end">
+            <div className="w-full bg-slate-950 border-t border-white/10 rounded-t-2xl p-5 space-y-4 max-h-[85vh] overflow-y-auto animate-slide-up">
+              <div className="flex justify-between items-center">
+                <span className={`text-xs px-2 py-0.5 rounded border font-bold ${getCSSCategoryColor(selectedGame.cat)}`}>
+                  {selectedGame.cat}
+                </span>
+                <button
+                  onClick={() => setIsDetailOpen(false)}
+                  className="p-1 rounded-full bg-white/5 text-gray-400 active:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div>
+                <h2 className="font-black text-2xl text-white tracking-tight mb-1.5">{selectedGame.name}</h2>
+                <p className="text-xs text-gray-300 leading-relaxed font-light">{selectedGame.desc}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-xl border border-white/5 bg-white/2">
+                  <span className="block text-[9px] text-gray-500 font-bold uppercase tracking-wider mb-1">High Score</span>
+                  <span className="font-mono text-base font-black text-yellow-400">
+                    {highScores[selectedGame.name] !== undefined ? highScores[selectedGame.name].toLocaleString() : 'No record'}
+                  </span>
+                </div>
+                <div className="p-3 rounded-xl border border-white/5 bg-white/2">
+                  <span className="block text-[9px] text-gray-500 font-bold uppercase tracking-wider mb-1">Cabinet Keys</span>
+                  <span className="font-mono text-[9px] text-gray-300 block truncate">{selectedGame.keys}</span>
+                </div>
+              </div>
+
+              <button
+                onClick={handleLaunchGame}
+                className="w-full py-3.5 rounded-xl bg-gradient-arcade font-black tracking-wider text-sm shadow-arcade text-white active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <Play className="w-4 h-4 fill-white" /> LAUNCH GAME
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Stats Modal */}
+        {showStatsModal && (
+          <div className="absolute inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="w-full max-w-sm bg-slate-950 border border-white/10 rounded-2xl p-5 space-y-4">
+              <div className="flex justify-between items-center pb-2 border-b border-white/5">
+                <span className="flex items-center gap-1.5 text-xs font-bold text-gray-300">
+                  <Activity className="w-4 h-4 text-neon-blue" /> CABINET DIAGNOSTICS
+                </span>
+                <button
+                  onClick={() => setShowStatsModal(false)}
+                  className="text-gray-500 hover:text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500 font-medium">Cabinet Status:</span>
+                  <span className="text-emerald-400 font-bold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> ONLINE
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500 font-medium">CPU Core Load:</span>
+                  <span className="text-gray-300 font-semibold">{stats.cpuLoad}%</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500 font-medium">GPU Temperature:</span>
+                  <span className="text-gray-300 font-semibold">{stats.gpuTemp}°C</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500 font-medium">Memory Allocation:</span>
+                  <span className="text-gray-300 font-semibold">{stats.memoryUsed} GB</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500 font-medium">Total Session Playtime:</span>
+                  <span className="text-gray-300 font-semibold">{formatTime(stats.activeTime)}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500 font-medium">Games Fired Up:</span>
+                  <span className="text-gray-300 font-semibold">{stats.playedCount}</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowStatsModal(false)}
+                className="w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-xs transition-all"
+              >
+                DISMISS DIAGNOSTICS
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Gameplay View */}
+        {isActive && (
+          <div className="absolute inset-0 z-45 bg-black flex flex-col justify-between h-full w-full mobile-gameplay-layout">
+            {/* Gameplay Header */}
+            <div className="flex justify-between items-center px-4 py-2 bg-slate-950 border-b border-white/5 shrink-0 z-20">
+              <div className="flex items-center gap-2">
+                <Gamepad2 className="w-4 h-4 text-neon-blue" />
+                <h2 className="font-extrabold text-sm text-white tracking-wide uppercase">
+                  {selectedGame.name}
+                </h2>
+              </div>
+              <button
+                onClick={handleCloseGame}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-gray-300 active:text-white active:bg-neon-pink/20 active:border-neon-pink/30 transition-all text-[10px] font-bold"
+              >
+                <X className="w-3.5 h-3.5" /> CLOSE CABINET
+              </button>
+            </div>
+
+            {/* Game Screen Area */}
+            <div className="flex-1 bg-black relative flex items-center justify-center overflow-hidden game-iframe-container">
+              <div className="absolute inset-0 scanline-overlay pointer-events-none z-10"></div>
+              <iframe
+                ref={iframeRef}
+                src={getGameIframeUrl(selectedGame.dir)}
+                onLoad={handleIframeLoad}
+                className="w-full h-full border-none z-0 absolute inset-0"
+                title={selectedGame.name}
+                allowFullScreen
+              />
+            </div>
+
+            {/* Virtual Gamepad Area */}
+            <div className="shrink-0 bg-slate-950 border-t border-white/5 p-2 flex items-center justify-center select-none touch-none virtual-gamepad-wrapper">
+              <VirtualGamepad
+                gameDir={selectedGame.dir}
+                sendKeyEvent={sendKeyEvent}
+                flagMode={flagMode}
+                setFlagMode={setFlagMode}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Loading Overlay */}
+        {isLaunching && (
+          <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center bg-slate-950 animate-fade-dark">
+            <div className="text-center">
+              <div className="text-[10px] font-mono font-bold tracking-[0.4em] text-neon-blue mb-3.5 uppercase animate-pulse">
+                LOADING RETRO ROM
+              </div>
+              <div className="w-40 h-1 bg-white/10 rounded-full overflow-hidden mx-auto">
+                <div className="h-full bg-gradient-arcade w-full animate-loader"></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+    );
+  }
+
+  // =====================================================================
+  // DESKTOP RENDER VIEW (ORIGINAL 3D CABINET)
+  // =====================================================================
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-cabinet-dark font-sans antialiased text-gray-100 select-none relative">
       
@@ -687,7 +1132,9 @@ export default function App() {
               <div className="absolute inset-0 scanline-overlay pointer-events-none z-10"></div>
               
               <iframe
+                ref={iframeRef}
                 src={getGameIframeUrl(selectedGame.dir)}
+                onLoad={handleIframeLoad}
                 className="w-full h-full border-none z-0"
                 title={selectedGame.name}
                 allowFullScreen
