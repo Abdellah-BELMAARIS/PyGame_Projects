@@ -112,7 +112,7 @@ class SparkParticle:
 
 
 class GameInfo:
-    LEVELS = 5  # Adjusted to match a neat cabinet session length
+    LEVELS = 20
 
     def __init__(self, level=1):
         self.level = level
@@ -268,7 +268,7 @@ class ComputerCar(AbstractCar):
 
     def next_level(self, level):
         self.reset()
-        self.vel = self.max_vel + (level - 1) * 0.25
+        self.vel = self.max_vel + (level - 1) * 0.08
         self.current_point = 0
 
 
@@ -284,7 +284,7 @@ def draw_hud(win, player_car, game_info):
 
     # 1. Level label
     lvl_lbl = MAIN_FONT.render("ARCADE LEVEL", True, NEON_PINK)
-    lvl_val = HUD_VAL_FONT.render(str(game_info.level), True, WHITE)
+    lvl_val = HUD_VAL_FONT.render(f"{game_info.level}/20", True, WHITE)
     win.blit(lvl_lbl, (hud_x + 15, hud_y + 12))
     win.blit(lvl_val, (hud_x + 160, hud_y + 10))
 

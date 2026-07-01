@@ -142,12 +142,12 @@ class Laser:
 
 
 class Asteroid:
-    def __init__(self, x, y, size):
+    def __init__(self, x, y, size, level=1):
         self.x = x
         self.y = y
         self.size = size # 3 (large), 2 (medium), 1 (small)
         self.radius = size * 20
-        self.speed = random.uniform(1.0, 2.5)
+        self.speed = random.uniform(1.0, 2.5) * (1.0 + (level - 1) * 0.08)
         self.angle = random.uniform(0, 360)
         rad = math.radians(self.angle)
         self.vx = math.sin(rad) * self.speed
@@ -190,6 +190,8 @@ async def main():
     
     score = 0
     lives = 3
+    level = 1
+    game_won = False
     game_over = False
     score_submitted = False
     
@@ -199,14 +201,15 @@ async def main():
     # Spawn initial large asteroids
     def spawn_initial():
         asteroids.clear()
-        for _ in range(5):
+        num_asteroids = 3 + level
+        for _ in range(num_asteroids):
             # Spawn away from center
             while True:
                 ax = random.randint(0, WIDTH)
                 ay = random.randint(0, HEIGHT)
                 if math.hypot(ax - WIDTH//2, ay - HEIGHT//2) > 150:
                     break
-            asteroids.append(Asteroid(ax, ay, 3))
+            asteroids.append(Asteroid(ax, ay, 3, level))
             
     spawn_initial()
 
@@ -230,6 +233,8 @@ async def main():
             if event.type == pygame.KEYDOWN:
                 if game_over:
                     if event.key == pygame.K_r:
+                        level = 1
+                        game_won = False
                         ship = Ship()
                         spawn_initial()
                         score = 0
@@ -295,7 +300,7 @@ async def main():
                     # Split asteroid
                     if hit_asteroid.size > 1:
                         for _ in range(2):
-                            asteroids.append(Asteroid(hit_asteroid.x, hit_asteroid.y, hit_asteroid.size - 1))
+                            asteroids.append(Asteroid(hit_asteroid.x, hit_asteroid.y, hit_asteroid.size - 1, level))
                     asteroids.remove(hit_asteroid)
 
             # Ship - Asteroid Collisions
@@ -332,10 +337,49 @@ async def main():
 
             # Check level clear (all asteroids destroyed)
             if not asteroids and not game_over:
-                # Spawn more next round!
-                spawn_initial()
-                # Extra score
-                score += 100
+                if level >= 20:
+                    game_won = True
+                    game_over = True
+                    if not score_submitted:
+                        score_submitted = True
+                        if arcade_api:
+                            arcade_api.submit_score("Neon Asteroids", score + 3000)
+                else:
+                    # Level clear transition overlay
+                    overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+                    pygame.draw.rect(overlay, (5, 5, 12, 210), (0, 0, WIDTH, HEIGHT))
+                    game_surface.fill(DARK_BG)
+                    # draw particles
+                    for p in particles:
+                        p.draw(game_surface)
+                    game_surface.blit(overlay, (0, 0))
+                    
+                    card_rect = pygame.Rect(WIDTH//4, HEIGHT//3, WIDTH//2, HEIGHT//3)
+                    pygame.draw.rect(game_surface, (15, 15, 30), card_rect, border_radius=15)
+                    pygame.draw.rect(game_surface, NEON_GREEN, card_rect, 3, border_radius=15)
+                    
+                    title = FONT_LARGE.render(f"LEVEL {level} CLEARED", True, NEON_GREEN)
+                    sub = FONT_HUD.render("CHARGING WARP DRIVE CORES...", True, WHITE)
+                    game_surface.blit(title, (WIDTH // 2 - title.get_width() // 2, HEIGHT // 3 + 35))
+                    game_surface.blit(sub, (WIDTH // 2 - sub.get_width() // 2, HEIGHT // 3 + 105))
+                    
+                    WIN.fill((0, 0, 0))
+                    WIN.blit(game_surface, (0, 0))
+                    pygame.display.update()
+                    
+                    await asyncio.sleep(2.0)
+                    
+                    level += 1
+                    spawn_initial()
+                    lasers.clear()
+                    particles.clear()
+                    ship.x = WIDTH // 2
+                    ship.y = HEIGHT // 2
+                    ship.vx = 0
+                    ship.vy = 0
+                    ship.angle = 0
+                    ship.alive = True
+                    continue
 
         if game_over and not score_submitted:
             score_submitted = True
@@ -362,8 +406,10 @@ async def main():
 
         # Draw HUD
         score_txt = FONT_HUD.render(f"SCORE: {score}", 1, NEON_BLUE)
-        lives_txt = FONT_HUD.render(f"SHIELD CORES: {'O ' * lives if lives > 0 else 'CRITICAL'}", 1, NEON_PINK)
+        level_txt = FONT_HUD.render(f"LEVEL: {level}/20", 1, GOLD)
+        lives_txt = FONT_HUD.render(f"CORES: {'O ' * lives if lives > 0 else 'CRITICAL'}", 1, NEON_PINK)
         game_surface.blit(score_txt, (20, 20))
+        game_surface.blit(level_txt, (WIDTH // 2 - level_txt.get_width() // 2, 20))
         game_surface.blit(lives_txt, (WIDTH - lives_txt.get_width() - 20, 20))
 
         # Draw Game Over Banner
@@ -374,11 +420,17 @@ async def main():
 
             over_rect = pygame.Rect(WIDTH // 4, HEIGHT // 3, WIDTH // 2, HEIGHT // 3)
             pygame.draw.rect(game_surface, (15, 15, 30), over_rect, border_radius=15)
-            pygame.draw.rect(game_surface, NEON_PINK, over_rect, 3, border_radius=15)
-
-            over_title = FONT_LARGE.render("SYSTEM FAILURE", True, NEON_PINK)
-            final_lbl = FONT_HUD.render(f"FINAL SCORE: {score}", True, WHITE)
-            restart_hint = FONT_HUD.render("PRESS 'R' TO REBOOT", True, NEON_BLUE)
+            
+            if game_won:
+                pygame.draw.rect(game_surface, NEON_GREEN, over_rect, 3, border_radius=15)
+                over_title = FONT_LARGE.render("SYSTEM RESTORED", True, NEON_GREEN)
+                final_lbl = FONT_HUD.render(f"VICTORY SCORE: {score}", True, WHITE)
+            else:
+                pygame.draw.rect(game_surface, NEON_PINK, over_rect, 3, border_radius=15)
+                over_title = FONT_LARGE.render("SYSTEM FAILURE", True, NEON_PINK)
+                final_lbl = FONT_HUD.render(f"FINAL SCORE: {score}", True, WHITE)
+                
+            restart_hint = FONT_HUD.render("PRESS 'R' TO REBOOT CORES", True, NEON_BLUE)
 
             game_surface.blit(over_title, (WIDTH // 2 - over_title.get_width() // 2, HEIGHT // 3 + 35))
             game_surface.blit(final_lbl, (WIDTH // 2 - final_lbl.get_width() // 2, HEIGHT // 3 + 105))

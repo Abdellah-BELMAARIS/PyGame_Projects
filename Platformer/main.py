@@ -388,9 +388,9 @@ def draw_hud(window, player, start_time, current_level):
     window.blit(time_lbl, (hud_x + 150, hud_y + 10))
     window.blit(time_val, (hud_x + 150, hud_y + 30))
 
-    # 3. Level indicator
-    lvl_lbl = FONT_HUD.render("STAGELINE", True, NEON_GREEN)
-    lvl_val = FONT_HUD_VAL.render(f"STAGE {current_level}/3", True, WHITE)
+    # Level Status
+    lvl_lbl = FONT_HUD.render("ARCADE STAGE", True, GOLD)
+    lvl_val = FONT_HUD_VAL.render(f"STAGE {current_level}/20", True, WHITE)
     window.blit(lvl_lbl, (hud_x + 250, hud_y + 10))
     window.blit(lvl_val, (hud_x + 250, hud_y + 30))
 
@@ -645,6 +645,70 @@ def load_level(level_num, block_size):
             Portal(block_size * 29, HEIGHT - block_size - 96, 64, 96)
         ]
         
+    else:
+        # Procedural platform level generation for levels 4 to 20
+        level_width_blocks = 25 + level_num * 5
+        random.seed(level_num * 123)
+        objects = []
+        
+        if level_num % 2 == 0:
+            # Solid Floor style
+            floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(-5, level_width_blocks)]
+            objects.extend(floor)
+            
+            curr_x = 4
+            while curr_x < level_width_blocks - 5:
+                pattern = random.choice(["jump_blocks", "fire_on_ground", "bridge_over_trap", "high_ledge"])
+                if pattern == "jump_blocks":
+                    h = random.choice([2, 3])
+                    objects.append(Block(curr_x * block_size, HEIGHT - block_size * h, block_size))
+                    objects.append(Block((curr_x + 1) * block_size, HEIGHT - block_size * h, block_size))
+                    curr_x += 4
+                elif pattern == "fire_on_ground":
+                    fire = Fire(curr_x * block_size, HEIGHT - block_size - 64, 16, 32)
+                    fire.on()
+                    objects.append(fire)
+                    curr_x += 3
+                elif pattern == "bridge_over_trap":
+                    fire1 = Fire(curr_x * block_size, HEIGHT - block_size - 64, 16, 32)
+                    fire2 = Fire((curr_x + 1) * block_size, HEIGHT - block_size - 64, 16, 32)
+                    fire1.on()
+                    fire2.on()
+                    objects.extend([fire1, fire2])
+                    objects.append(Block(curr_x * block_size, HEIGHT - block_size * 3, block_size))
+                    objects.append(Block((curr_x + 1) * block_size, HEIGHT - block_size * 3, block_size))
+                    curr_x += 5
+                elif pattern == "high_ledge":
+                    objects.append(Block(curr_x * block_size, HEIGHT - block_size * 2, block_size))
+                    objects.append(Block((curr_x + 1) * block_size, HEIGHT - block_size * 3, block_size))
+                    objects.append(Block((curr_x + 2) * block_size, HEIGHT - block_size * 4, block_size))
+                    curr_x += 6
+        else:
+            # Chasm/Pit style level
+            curr_x = -5
+            while curr_x < level_width_blocks:
+                p_width = random.randint(3, 6)
+                for i in range(p_width):
+                    if curr_x + i < level_width_blocks:
+                        objects.append(Block((curr_x + i) * block_size, HEIGHT - block_size, block_size))
+                
+                if p_width >= 4 and random.random() < 0.5:
+                    fire = Fire((curr_x + p_width // 2) * block_size, HEIGHT - block_size - 64, 16, 32)
+                    fire.on()
+                    objects.append(fire)
+                
+                gap = random.randint(2, 4)
+                if gap >= 3:
+                    stone_x = curr_x + p_width + gap // 2
+                    stone_h = random.choice([2, 3])
+                    objects.append(Block(stone_x * block_size, HEIGHT - block_size * stone_h, block_size))
+                    
+                curr_x += p_width + gap
+                
+        portal_x = (level_width_blocks - 4) * block_size
+        portal = Portal(portal_x, HEIGHT - block_size - 96, 64, 96)
+        objects.append(portal)
+        
     return objects
 
 
@@ -711,7 +775,7 @@ async def main(window):
     player = Player(100, 100, 50, 50, selected_char)
     
     current_level = 1
-    max_levels = 3
+    max_levels = 20
     objects = load_level(current_level, block_size)
 
     offset_x = 0

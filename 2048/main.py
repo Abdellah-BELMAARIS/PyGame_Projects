@@ -54,6 +54,29 @@ TILE_COLORS = {
     4096: (255, 255, 255)   # Supernova White
 }
 
+LEVEL_CONFIG = {
+    1: (16, 0),
+    2: (32, 0),
+    3: (64, 0),
+    4: (128, 0),
+    5: (256, 0),
+    6: (512, 0),
+    7: (1024, 0),
+    8: (2048, 0),
+    9: (512, 1),
+    10: (1024, 1),
+    11: (256, 2),
+    12: (512, 2),
+    13: (1024, 2),
+    14: (128, 3),
+    15: (256, 3),
+    16: (512, 3),
+    17: (64, 4),
+    18: (128, 4),
+    19: (256, 4),
+    20: (32, 5)
+}
+
 # Fonts
 try:
     FONT_TILE = pygame.font.SysFont("Outfit", 46, bold=True)
@@ -115,11 +138,12 @@ class Tile:
         self.y = row * RECT_HEIGHT
 
     def get_color(self):
+        if self.value == -1:
+            return (100, 100, 110)
         return TILE_COLORS.get(self.value, TILE_COLORS[4096])
 
     def draw(self, window):
         color = self.get_color()
-        # Draw tile with shifted y for HUD
         draw_y = self.y + HUD_HEIGHT
         rect = pygame.Rect(self.x + 6, draw_y + 6, RECT_WIDTH - 12, RECT_HEIGHT - 12)
         
@@ -127,18 +151,23 @@ class Tile:
         pygame.draw.rect(window, (color[0] // 6, color[1] // 6, color[2] // 6), rect, border_radius=12)
         pygame.draw.rect(window, color, rect, 2, border_radius=12)
         
-        # 2. Inner glossy highlight
-        highlight_color = (min(255, color[0] + 80), min(255, color[1] + 80), min(255, color[2] + 80))
-        pygame.draw.rect(window, highlight_color, (self.x + 12, draw_y + 12, RECT_WIDTH - 24, RECT_HEIGHT - 24), 1, border_radius=8)
+        if self.value == -1:
+            # Draw X for blockers
+            pygame.draw.line(window, color, (self.x + 24, draw_y + 24), (self.x + RECT_WIDTH - 24, draw_y + RECT_HEIGHT - 24), 4)
+            pygame.draw.line(window, color, (self.x + RECT_WIDTH - 24, draw_y + 24), (self.x + 24, draw_y + RECT_HEIGHT - 24), 4)
+        else:
+            # 2. Inner glossy highlight
+            highlight_color = (min(255, color[0] + 80), min(255, color[1] + 80), min(255, color[2] + 80))
+            pygame.draw.rect(window, highlight_color, (self.x + 12, draw_y + 12, RECT_WIDTH - 24, RECT_HEIGHT - 24), 1, border_radius=8)
 
-        # 3. Draw text number
-        val_str = str(self.value)
-        text = FONT_TILE.render(val_str, 1, WHITE)
-        
-        # Draw shadow
-        text_shadow = FONT_TILE.render(val_str, 1, (10, 10, 15))
-        window.blit(text_shadow, (self.x + (RECT_WIDTH / 2 - text.get_width() / 2) + 2, draw_y + (RECT_HEIGHT / 2 - text.get_height() / 2) + 2))
-        window.blit(text, (self.x + (RECT_WIDTH / 2 - text.get_width() / 2), draw_y + (RECT_HEIGHT / 2 - text.get_height() / 2)))
+            # 3. Draw text number
+            val_str = str(self.value)
+            text = FONT_TILE.render(val_str, 1, WHITE)
+            
+            # Draw shadow
+            text_shadow = FONT_TILE.render(val_str, 1, (10, 10, 15))
+            window.blit(text_shadow, (self.x + (RECT_WIDTH / 2 - text.get_width() / 2) + 2, draw_y + (RECT_HEIGHT / 2 - text.get_height() / 2) + 2))
+            window.blit(text, (self.x + (RECT_WIDTH / 2 - text.get_width() / 2), draw_y + (RECT_HEIGHT / 2 - text.get_height() / 2)))
 
     def set_pos(self, ceil=False):
         if ceil:
@@ -161,10 +190,12 @@ class Game2048:
         self.particles = []
         self.shake_duration = 0
         self.shake_amount = 0
+        self.level = 1
+        self.game_won = False
         self.game_over = False
         self.score_submitted = False
         
-        self.generate_initial_tiles()
+        self.start_level()
 
     def load_high_score(self):
         try:
@@ -182,8 +213,14 @@ class Game2048:
         except:
             pass
 
-    def generate_initial_tiles(self):
+    def start_level(self):
         self.tiles.clear()
+        target, num_blockers = LEVEL_CONFIG[self.level]
+        for _ in range(num_blockers):
+            pos = self.get_random_pos()
+            if pos:
+                r, c = pos
+                self.tiles[f"{r}{c}"] = Tile(-1, r, c)
         for _ in range(2):
             self.spawn_new_tile()
 
@@ -227,14 +264,17 @@ class Game2048:
         pygame.draw.rect(window, HUD_BG, hud_rect)
         pygame.draw.line(window, NEON_BLUE, (0, HUD_HEIGHT - 2), (WIDTH, HUD_HEIGHT - 2), 3)
 
-        # Draw Title
-        title_lbl = FONT_OVERLAY_SUB.render("NEON 2048", True, WHITE)
-        title_lbl_glow = FONT_OVERLAY_SUB.render("NEON 2048", True, NEON_BLUE)
-        window.blit(title_lbl_glow, (25, 26))
-        window.blit(title_lbl, (23, 24))
+        # Draw Level Info
+        level_lbl = FONT_HUD_LABEL.render(f"LEVEL: {self.level}/20", True, NEON_GREEN)
+        goal_val = LEVEL_CONFIG[self.level][0]
+        goal_lbl = FONT_HUD_LABEL.render(f"GOAL TILE: {goal_val}", True, GOLD)
+        window.blit(level_lbl, (25, 24))
+        window.blit(goal_lbl, (25, 44))
         
-        desc_lbl = FONT_HUD_LABEL.render("MERGE THE SHINING TILES", True, (100, 110, 140))
-        window.blit(desc_lbl, (23, 56))
+        num_blockers = LEVEL_CONFIG[self.level][1]
+        if num_blockers > 0:
+            blocker_lbl = FONT_HUD_LABEL.render(f"BLOCKERS: {num_blockers}", True, NEON_PINK)
+            window.blit(blocker_lbl, (25, 64))
 
         # Score box
         score_box_w = 140
@@ -284,10 +324,16 @@ class Game2048:
 
             over_rect = pygame.Rect(WIDTH // 4, HEIGHT // 3, WIDTH // 2, HEIGHT // 3)
             pygame.draw.rect(window, (15, 15, 30), over_rect, border_radius=15)
-            pygame.draw.rect(window, NEON_PINK, over_rect, 3, border_radius=15)
-
-            over_title = FONT_OVERLAY.render("GRID LOCKED", True, NEON_PINK)
-            final_lbl = FONT_HUD_VAL.render(f"FINAL SCORE: {self.score}", True, WHITE)
+            
+            if self.game_won:
+                pygame.draw.rect(window, NEON_GREEN, over_rect, 3, border_radius=15)
+                over_title = FONT_OVERLAY.render("GRID CHAMPION", True, NEON_GREEN)
+                final_lbl = FONT_HUD_VAL.render(f"VICTORY SCORE: {self.score}", True, WHITE)
+            else:
+                pygame.draw.rect(window, NEON_PINK, over_rect, 3, border_radius=15)
+                over_title = FONT_OVERLAY.render("GRID LOCKED", True, NEON_PINK)
+                final_lbl = FONT_HUD_VAL.render(f"FINAL SCORE: {self.score}", True, WHITE)
+                
             restart_hint = FONT_OVERLAY_SUB.render("PRESS R TO REPLAY", True, NEON_BLUE)
 
             window.blit(over_title, (WIDTH // 2 - over_title.get_width() // 2, HEIGHT // 3 + 35))
@@ -300,18 +346,29 @@ class Game2048:
             self.tiles[f"{tile.row}{tile.col}"] = tile
 
     def check_lost(self):
-        if len(self.tiles) < 16:
+        # Count only non-blocker empty cells
+        empty_count = 0
+        for r in range(ROWS):
+            for c in range(COLS):
+                if f"{r}{c}" not in self.tiles:
+                    empty_count += 1
+        if empty_count > 0:
             return False
             
         # Grid is full, check if any adjacent tiles have matching values
         for r in range(ROWS):
             for c in range(COLS):
-                val = self.tiles[f"{r}{c}"].value
+                tile = self.tiles.get(f"{r}{c}")
+                if not tile or tile.value == -1:
+                    continue
+                val = tile.value
                 # Check right
-                if c + 1 < COLS and self.tiles[f"{r}{c+1}"].value == val:
+                right_tile = self.tiles.get(f"{r}{c+1}")
+                if c + 1 < COLS and right_tile and right_tile.value == val:
                     return False
                 # Check down
-                if r + 1 < ROWS and self.tiles[f"{r+1}{c}"].value == val:
+                down_tile = self.tiles.get(f"{r+1}{c}")
+                if r + 1 < ROWS and down_tile and down_tile.value == val:
                     return False
         return True
 
@@ -366,6 +423,8 @@ class Game2048:
             sorted_tiles = sorted(self.tiles.values(), key=sort_func, reverse=reverse)
 
             for i, tile in enumerate(sorted_tiles):
+                if tile.value == -1: # Blockers cannot slide
+                    continue
                 if boundary_check(tile):
                     continue
 
@@ -419,6 +478,35 @@ class Game2048:
 
         if move_occurred:
             self.spawn_new_tile()
+            
+            # Check level completion
+            target_val = LEVEL_CONFIG[self.level][0]
+            if any(t.value == target_val for t in self.tiles.values()):
+                # Transition overlay
+                overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+                pygame.draw.rect(overlay, (5, 5, 10, 220), (0, 0, WIDTH, HEIGHT))
+                WINDOW.blit(overlay, (0, 0))
+                
+                panel_rect = pygame.Rect(WIDTH // 4, HEIGHT // 3, WIDTH // 2, HEIGHT // 3)
+                pygame.draw.rect(WINDOW, (15, 15, 25), panel_rect, border_radius=15)
+                pygame.draw.rect(WINDOW, NEON_GREEN, panel_rect, 3, border_radius=15)
+                
+                title = FONT_OVERLAY.render(f"LEVEL {self.level} CLEAR", True, NEON_GREEN)
+                sub = FONT_OVERLAY_SUB.render(f"PREPARING GRID SECTOR {self.level + 1}...", True, WHITE)
+                WINDOW.blit(title, (WIDTH // 2 - title.get_width() // 2, HEIGHT // 2 - 40))
+                WINDOW.blit(sub, (WIDTH // 2 - sub.get_width() // 2, HEIGHT // 2 + 15))
+                
+                pygame.display.update()
+                await asyncio.sleep(2.0)
+                
+                if self.level >= 20:
+                    self.game_won = True
+                    self.game_over = True
+                else:
+                    self.level += 1
+                    self.start_level()
+                    return
+            
             if self.check_lost():
                 self.game_over = True
                 if arcade_api and not self.score_submitted:

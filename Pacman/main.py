@@ -204,7 +204,7 @@ class PacmanPlayer:
 
 
 class PacmanGhost:
-    def __init__(self, index, color):
+    def __init__(self, index, color, level=1):
         self.index = index
         self.color = color
         self.grid_x = 8 + index % 3
@@ -214,7 +214,8 @@ class PacmanGhost:
         
         self.dir_x = 0
         self.dir_y = 0
-        self.speed = 2
+        # Speed scales with level, capped at 3.6
+        self.speed = min(3.6, 2.0 + (level - 1) * 0.1)
         self.scared = False
         
         self.target_gx = 0
@@ -314,11 +315,12 @@ class PacmanGame:
     def __init__(self):
         self.maze = [list(row) for row in MAZE]
         self.player = PacmanPlayer()
-        self.ghosts = [PacmanGhost(i, GHOST_COLORS[i]) for i in range(4)]
+        self.ghosts = [PacmanGhost(i, GHOST_COLORS[i], 1) for i in range(4)]
         self.particles = []
         self.score = 0
         self.lives = 3
         self.level = 1
+        self.game_won = False
         self.game_over = False
         self.score_submitted = False
         self.scared_timer = 0
@@ -369,14 +371,17 @@ class PacmanGame:
                 # Eat power pellet
                 self.maze[player_grid_y][player_grid_x] = 3
                 self.score += 50
-                # Trigger scared state
-                self.scared_timer = 360 # 6 seconds at 60 FPS
+                # Power pellet eaten!
+                self.scared_timer = max(60, 360 - self.level * 15)
+                self.score += 50
                 for ghost in self.ghosts:
                     ghost.scared = True
-                    ghost.speed = 1.2 # slow down scared ghosts
-                # Sparks
+                    # Scared ghost speed decreases
+                    ghost.speed = 1.2
+                self.maze[self.player.grid_y][self.player.grid_x] = 3
+                # Spark particles
                 for _ in range(12):
-                    self.particles.append(EatParticle(self.player.x, self.player.y, WHITE))
+                    self.particles.append(EatParticle(self.player.x, self.player.y, NEON_GREEN))
                 # Small shake
                 self.shake_duration = 10
                 self.shake_amount = 4
@@ -410,7 +415,7 @@ class PacmanGame:
                         # Respawn
                         self.player = PacmanPlayer()
                         for i, g in enumerate(self.ghosts):
-                            g.__init__(i, GHOST_COLORS[i])
+                            g.__init__(i, GHOST_COLORS[i], self.level)
                     else:
                         self.game_over = True
                     break
@@ -441,6 +446,10 @@ class PacmanGame:
         lives_val = FONT_HUD.render("O " * self.lives if self.lives > 0 else "CRITICAL", True, WHITE)
         surface.blit(lives_lbl, (WIDTH - lives_lbl.get_width() - 30, 20))
         surface.blit(lives_val, (WIDTH - lives_val.get_width() - 30, 45))
+
+        # Draw level stage
+        level_lbl = FONT_HUD.render(f"STAGE {self.level}/20", True, GOLD)
+        surface.blit(level_lbl, (WIDTH // 2 - level_lbl.get_width() // 2, 20))
 
 
 async def main():
@@ -492,15 +501,42 @@ async def main():
             
             # Check level completion (no dots left)
             if game.count_pellets() == 0:
-                # Reload level
-                game.maze = [list(row) for row in MAZE]
-                game.level += 1
-                game.player = PacmanPlayer()
-                for i, ghost in enumerate(game.ghosts):
-                    ghost.__init__(i, GHOST_COLORS[i])
-                game.particles.clear()
-                game.shake_duration = 20
-                game.shake_amount = 6
+                if game.level >= 20:
+                    game.game_won = True
+                    game.game_over = True
+                    if not game.score_submitted:
+                        game.score_submitted = True
+                        if arcade_api:
+                            arcade_api.submit_score("Neon Pac-Man", game.score + 5000)
+                else:
+                    # Transition overlay
+                    overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+                    pygame.draw.rect(overlay, (5, 5, 12, 210), (0, 0, WIDTH, HEIGHT))
+                    game_surface.blit(overlay, (0, 0))
+
+                    card_rect = pygame.Rect(WIDTH // 4, HEIGHT // 3, WIDTH // 2, HEIGHT // 3)
+                    pygame.draw.rect(game_surface, (15, 15, 30), card_rect, border_radius=15)
+                    pygame.draw.rect(game_surface, NEON_GREEN, card_rect, 3, border_radius=15)
+
+                    title = FONT_LARGE.render(f"STAGE {game.level} CLEARED!", True, NEON_GREEN)
+                    sub = FONT_HUD.render("PREPARING SYSTEM INCOMING GRID...", True, WHITE)
+                    game_surface.blit(title, (WIDTH // 2 - title.get_width() // 2, HEIGHT // 3 + 35))
+                    game_surface.blit(sub, (WIDTH // 2 - sub.get_width() // 2, HEIGHT // 3 + 105))
+
+                    WIN.fill((0, 0, 0))
+                    WIN.blit(game_surface, (0, 0))
+                    pygame.display.update()
+
+                    await asyncio.sleep(2.5)
+
+                    game.maze = [list(row) for row in MAZE]
+                    game.level += 1
+                    game.player = PacmanPlayer()
+                    for i, ghost in enumerate(game.ghosts):
+                        ghost.__init__(i, GHOST_COLORS[i], game.level)
+                    game.particles.clear()
+                    game.shake_duration = 20
+                    game.shake_amount = 6
 
         # Draw
         game_surface.fill(DARK_BG)
@@ -532,10 +568,16 @@ async def main():
 
             over_rect = pygame.Rect(WIDTH // 4, HEIGHT // 3, WIDTH // 2, HEIGHT // 3)
             pygame.draw.rect(game_surface, (15, 15, 30), over_rect, border_radius=15)
-            pygame.draw.rect(game_surface, NEON_PINK, over_rect, 3, border_radius=15)
-
-            over_title = FONT_LARGE.render("SYSTEM CRITICAL", True, NEON_PINK)
-            final_lbl = FONT_HUD.render(f"FINAL SCORE: {game.score}", True, WHITE)
+            
+            if game.game_won:
+                pygame.draw.rect(game_surface, NEON_GREEN, over_rect, 3, border_radius=15)
+                over_title = FONT_LARGE.render("GRID MASTER", True, NEON_GREEN)
+                final_lbl = FONT_HUD.render(f"VICTORY SCORE: {game.score}", True, WHITE)
+            else:
+                pygame.draw.rect(game_surface, NEON_PINK, over_rect, 3, border_radius=15)
+                over_title = FONT_LARGE.render("SYSTEM CRITICAL", True, NEON_PINK)
+                final_lbl = FONT_HUD.render(f"FINAL SCORE: {game.score}", True, WHITE)
+                
             restart_hint = FONT_HUD.render("PRESS 'R' TO REBOOT CORE", True, NEON_BLUE)
 
             game_surface.blit(over_title, (WIDTH // 2 - over_title.get_width() // 2, HEIGHT // 3 + 35))

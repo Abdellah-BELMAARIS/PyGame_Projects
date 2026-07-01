@@ -165,6 +165,14 @@ const GAMES: Game[] = [
     cat: "ACTION",
     desc: "Procedurally generated retro-modern Mario platformer. Complete 20 levels of jumping, coin collecting, brick-bumping, and face the final Bowser boss battle!",
     keys: "Arrows/WASD (Move), Space/Up/W (Jump), C/Shift (Fireballs)"
+  },
+  {
+    name: "Level Devil",
+    path: "Level_Devil/main.py",
+    dir: "Level_Devil",
+    cat: "ACTION",
+    desc: "Neon Troll Platformer. Guide your glowing block to the portal while dodging unexpected spikes, collapsing bridges, shifting portals, inverted controls, rising lava, and a final boss!",
+    keys: "Arrow Keys / WASD (Move), Space / Up Arrow / W (Jump), R (Replay)"
   }
 ];
 

@@ -48,20 +48,39 @@ DARK_BG = (10, 10, 22)
 NEON_PINK = (255, 0, 150)
 RED = (255, 0, 50)
 
+NEON_GREEN = (0, 255, 100)
+
 LEVEL_COLORS = {
     1: CYAN,
-    2: GOLD,
-    3: ORANGE,
-    4: NEON_PINK,
-    5: RED
+    2: NEON_GREEN,
+    3: (0, 255, 0),
+    4: (150, 255, 0),
+    5: GOLD,
+    6: (255, 170, 0),
+    7: ORANGE,
+    8: (255, 60, 0),
+    9: RED,
+    10: (255, 0, 120),
+    11: NEON_PINK,
+    12: (255, 0, 255),
+    13: (180, 0, 255),
+    14: (110, 0, 255),
+    15: (0, 0, 255),
+    16: (0, 100, 255),
+    17: (0, 180, 255),
+    18: (100, 255, 255),
+    19: (255, 255, 255),
+    20: (255, 50, 50)
 }
 
 LEVEL_NAMES = {
-    1: "STAGE 1: NEON COURIER",
-    2: "STAGE 2: GOLDEN ASTEROID BELT",
-    3: "STAGE 3: ORANGE METEOR SHOWER",
-    4: "STAGE 4: NEON SOLAR STORM",
-    5: "STAGE 5: RED SUPERNOVA CHAOS"
+    i: f"STAGE {i}: " + [
+        "NEON COURIER", "GREEN GLOW CORRIDOR", "MINT METEOR BELT", "LIME DRIFT CLOUD",
+        "GOLDEN DUST FIELD", "AMBER METEOR STREAM", "ORANGE SOLAR STORM", "FIREBALL HORIZON",
+        "RED SUPERNOVA CHAOS", "PINK PULSAR HARVEST", "NEON NEBULA DEVIATION", "MAGENTA COSMOS",
+        "PURPLE PROTO-ZONE", "INDIGO HORIZON", "DEEP SPACE DRIFT", "COSMIC TURBULENCE",
+        "SKY RUSH CRITICAL", "GLACIAL SHATTER", "WHITE DWARF ORBIT", "DETONATION DETECTOR"
+    ][i - 1] for i in range(1, 21)
 }
 
 # Try to load a premium font
@@ -241,6 +260,7 @@ async def main():
     debris_particles = []
     
     hit = False
+    won = False
     score = 0
     score_submitted = False
     high_score = load_high_score()
@@ -271,7 +291,12 @@ async def main():
             score = int(elapsed_time * 10)
             
             # Determine level scaling
-            calculated_level = min(5, 1 + score // score_per_level)
+            calculated_level = min(20, 1 + score // score_per_level)
+            if score >= 3000 and not won:
+                won = True
+                hit = True
+                for _ in range(30):
+                    debris_particles.append(DebrisParticle(player.x + PLAYER_WIDTH // 2, player.y + PLAYER_HEIGHT // 2, NEON_GREEN))
             if calculated_level > current_level:
                 # Level Up!
                 current_level = calculated_level
@@ -439,11 +464,16 @@ async def main():
 
             over_rect = pygame.Rect(WIDTH // 4, HEIGHT // 3, WIDTH // 2, HEIGHT // 3)
             pygame.draw.rect(game_surface, (15, 15, 30), over_rect, border_radius=15)
-            pygame.draw.rect(game_surface, theme_color, over_rect, 3, border_radius=15)
+            if won:
+                pygame.draw.rect(game_surface, NEON_GREEN, over_rect, 3, border_radius=15)
+                lost_title = FONT_LARGE.render("MISSION SUCCESS", 1, NEON_GREEN)
+                final_score_text = FONT.render(f"VICTORY SCORE: {score}", 1, WHITE)
+            else:
+                pygame.draw.rect(game_surface, theme_color, over_rect, 3, border_radius=15)
+                lost_title = FONT_LARGE.render("SYSTEM FAILURE", 1, theme_color)
+                final_score_text = FONT.render(f"FINAL SCORE: {score}", 1, WHITE)
 
-            lost_title = FONT_LARGE.render("SYSTEM FAILURE", 1, theme_color)
-            final_score_text = FONT.render(f"FINAL SCORE: {score}", 1, WHITE)
-            restart_text = FONT.render("PRESS R TO REBOOT", 1, theme_color)
+            restart_text = FONT.render("PRESS R TO REBOOT", 1, theme_color if not won else NEON_GREEN)
 
             game_surface.blit(lost_title, (WIDTH // 2 - lost_title.get_width() // 2, HEIGHT // 3 + 30))
             game_surface.blit(final_score_text, (WIDTH // 2 - final_score_text.get_width() // 2, HEIGHT // 3 + 100))
@@ -452,6 +482,7 @@ async def main():
             # Replay input check
             if keys[pygame.K_r]:
                 hit = False
+                won = False
                 player.x = WIDTH // 2 - PLAYER_WIDTH // 2
                 meteors.clear()
                 thruster_particles.clear()

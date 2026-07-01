@@ -154,7 +154,7 @@ def draw_laser(surface, rect, color):
     pygame.draw.rect(surface, WHITE, (rect.x + 2, rect.y + 1, rect.width - 4, rect.height - 2), border_radius=1)
 
 
-def draw_window(red, yellow, red_bullets, yellow_bullets, red_health, yellow_health, thruster_particles, hit_sparks):
+def draw_window(red, yellow, red_bullets, yellow_bullets, red_health, yellow_health, thruster_particles, hit_sparks, level=1, obstacles=[]):
     # Background
     if HAS_ASSETS:
         WIN.blit(SPACE, (0, 0))
@@ -171,6 +171,16 @@ def draw_window(red, yellow, red_bullets, yellow_bullets, red_health, yellow_hea
     pygame.draw.rect(WIN, (BORDER_COLOR[0] // 5, BORDER_COLOR[1] // 5, BORDER_COLOR[2] // 5), BORDER)
     pygame.draw.rect(WIN, BORDER_COLOR, BORDER, 1)
     
+    # Draw level HUD text
+    level_txt = WINNER_FONT.render(f"STAGE {level}/20", True, (255, 255, 255))
+    level_scale = pygame.transform.scale(level_txt, (level_txt.get_width() // 2, level_txt.get_height() // 2))
+    WIN.blit(level_scale, (WIDTH // 2 - level_scale.get_width() // 2, 20))
+
+    # Draw obstacles
+    for obs in obstacles:
+        pygame.draw.rect(WIN, NEON_GREEN, obs, border_radius=4)
+        pygame.draw.rect(WIN, WHITE, (obs.x + 3, obs.y + 3, obs.width - 6, obs.height - 6), border_radius=2)
+
     # Draw thruster flame trails
     for p in thruster_particles:
         p.draw(WIN)
@@ -192,7 +202,7 @@ def draw_window(red, yellow, red_bullets, yellow_bullets, red_health, yellow_hea
         p2_pts = [(red.x + SPACESHIP_WIDTH, red.y), (red.x, red.y + SPACESHIP_HEIGHT//2), (red.x + SPACESHIP_WIDTH, red.y + SPACESHIP_HEIGHT)]
         pygame.draw.polygon(WIN, NEON_PINK, p2_pts, 2)
 
-    # Draw glowing bullets
+    # Draw glowing lasers
     for bullet in red_bullets:
         draw_laser(WIN, bullet, NEON_PINK)
 
@@ -201,12 +211,10 @@ def draw_window(red, yellow, red_bullets, yellow_bullets, red_health, yellow_hea
 
     # Draw HUD
     draw_hud(WIN, red_health, yellow_health)
-
     pygame.display.update()
 
 
 def yellow_handle_movement(keys_pressed, yellow):
-    # Support both QWERTY (WASD) and AZERTY (ZQSD) layouts seamlessly
     move_left = keys_pressed[pygame.K_a] or keys_pressed[pygame.K_q]
     move_right = keys_pressed[pygame.K_d]
     move_up = keys_pressed[pygame.K_w] or keys_pressed[pygame.K_z]
@@ -222,23 +230,22 @@ def yellow_handle_movement(keys_pressed, yellow):
         yellow.y += VEL
 
 
-def red_handle_movement(keys_pressed, red):
-    if keys_pressed[pygame.K_LEFT] and red.x - VEL > BORDER.x + BORDER.width:
-        red.x -= VEL
-    if keys_pressed[pygame.K_RIGHT] and red.x + VEL + red.width < WIDTH:
-        red.x += VEL
-    if keys_pressed[pygame.K_UP] and red.y - VEL > 0:
-        red.y -= VEL
-    if keys_pressed[pygame.K_DOWN] and red.y + VEL + red.height < HEIGHT - 15:
-        red.y += VEL
-
-
-def handle_bullets(yellow_bullets, red_bullets, yellow, red, hit_sparks, state_bag):
-    for bullet in yellow_bullets:
+def handle_bullets(yellow_bullets, red_bullets, yellow, red, hit_sparks, state_bag, obstacles=[]):
+    for bullet in yellow_bullets[:]:
+        hit_obs = False
+        for obs in obstacles:
+            if bullet.colliderect(obs):
+                hit_obs = True
+                for _ in range(6):
+                    hit_sparks.append(HitSpark(bullet.x, bullet.y, NEON_GREEN))
+                break
+        if hit_obs:
+            yellow_bullets.remove(bullet)
+            continue
+            
         bullet.x += BULLET_VEL
         if red.colliderect(bullet):
             pygame.event.post(pygame.event.Event(RED_HIT))
-            # Spawn impact sparks
             for _ in range(12):
                 hit_sparks.append(HitSpark(bullet.x, bullet.y, NEON_BLUE))
             state_bag["shake_duration"] = 10
@@ -247,11 +254,21 @@ def handle_bullets(yellow_bullets, red_bullets, yellow, red, hit_sparks, state_b
         elif bullet.x > WIDTH:
             yellow_bullets.remove(bullet)
 
-    for bullet in red_bullets:
+    for bullet in red_bullets[:]:
+        hit_obs = False
+        for obs in obstacles:
+            if bullet.colliderect(obs):
+                hit_obs = True
+                for _ in range(6):
+                    hit_sparks.append(HitSpark(bullet.x, bullet.y, NEON_GREEN))
+                break
+        if hit_obs:
+            red_bullets.remove(bullet)
+            continue
+            
         bullet.x -= BULLET_VEL
         if yellow.colliderect(bullet):
             pygame.event.post(pygame.event.Event(YELLOW_HIT))
-            # Spawn impact sparks
             for _ in range(12):
                 hit_sparks.append(HitSpark(bullet.x, bullet.y, NEON_PINK))
             state_bag["shake_duration"] = 10
@@ -262,7 +279,6 @@ def handle_bullets(yellow_bullets, red_bullets, yellow, red, hit_sparks, state_b
 
 
 async def draw_winner(text, border_color):
-    # Render glowing victory overlay card
     overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
     pygame.draw.rect(overlay, (5, 5, 12, 215), (0, 0, WIDTH, HEIGHT))
     WIN.blit(overlay, (0, 0))
@@ -276,136 +292,205 @@ async def draw_winner(text, border_color):
     pygame.draw.rect(WIN, border_color, (card_x, card_y, card_w, card_h), 3, border_radius=15)
 
     draw_text = WINNER_FONT.render(text, 1, border_color)
-    restart_text = HEALTH_FONT.render("REBOOTING COMBAT MATRIX...", 1, WHITE)
+    restart_text = HEALTH_FONT.render("PRESS R TO RESTART COMBAT GRID", 1, WHITE)
     
     WIN.blit(draw_text, (WIDTH // 2 - draw_text.get_width() // 2, card_y + 50))
     WIN.blit(restart_text, (WIDTH // 2 - restart_text.get_width() // 2, card_y + 140))
-    
     pygame.display.update()
-    await asyncio.sleep(4.5)
 
 
 async def main():
-    red = pygame.Rect(700, 300, SPACESHIP_WIDTH, SPACESHIP_HEIGHT)
-    yellow = pygame.Rect(100, 300, SPACESHIP_WIDTH, SPACESHIP_HEIGHT)
+    level = 1
+    max_levels = 20
+    score = 0
+    score_submitted = False
+    start_time = time.time()
 
-    red_bullets = []
-    yellow_bullets = []
+    def get_obstacles(lvl):
+        obs = []
+        sp = []
+        if lvl >= 6:
+            num = min(4, 1 + lvl // 4)
+            for i in range(num):
+                rect = pygame.Rect(WIDTH // 2 - 12, 80 + i * 110, 24, 60)
+                obs.append(rect)
+                sp.append(1.5 + lvl * 0.08)
+        return obs, sp
 
-    red_health = 10
-    yellow_health = 10
+    while True:
+        red = pygame.Rect(700, 300, SPACESHIP_WIDTH, SPACESHIP_HEIGHT)
+        yellow = pygame.Rect(100, 300, SPACESHIP_WIDTH, SPACESHIP_HEIGHT)
 
-    # Particle registers
-    thruster_particles = []
-    hit_sparks = []
+        red_bullets = []
+        yellow_bullets = []
 
-    # Screen shake shared dict
-    state_bag = {
-        "shake_duration": 0,
-        "shake_amount": 0
-    }
+        red_health = 10
+        yellow_health = 10
 
-    clock = pygame.time.Clock()
-    run = True
-    
-    while run:
-        clock.tick(FPS)
+        thruster_particles = []
+        hit_sparks = []
 
-        # Update thruster particles
-        for p in thruster_particles[:]:
-            # P1 direction factor is +1 (moving right-ish), P2 is -1 (moving left-ish)
-            # Find which player ship it belongs to and update drift
-            belongs_to_p1 = p.color == NEON_BLUE
-            p.update(1 if belongs_to_p1 else -1)
-            if p.life <= 0:
-                thruster_particles.remove(p)
+        state_bag = {
+            "shake_duration": 0,
+            "shake_amount": 0
+        }
 
-        # Update hit sparks
-        for p in hit_sparks[:]:
-            p.update()
-            if p.life <= 0:
-                hit_sparks.remove(p)
+        obstacles, obs_speeds = get_obstacles(level)
+        clock = pygame.time.Clock()
+        run = True
+        level_won = False
+        game_over = False
+        
+        while run:
+            clock.tick(FPS)
+            elapsed_time = int(time.time() - start_time)
 
-        # Keyboard polling events
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            # Move obstacles
+            for i in range(len(obstacles)):
+                obstacles[i].y += obs_speeds[i]
+                if obstacles[i].y < 40 or obstacles[i].y > HEIGHT - 90:
+                    obs_speeds[i] *= -1
+
+            for p in thruster_particles[:]:
+                belongs_to_p1 = p.color == NEON_BLUE
+                p.update(1 if belongs_to_p1 else -1)
+                if p.life <= 0:
+                    thruster_particles.remove(p)
+
+            for p in hit_sparks[:]:
+                p.update()
+                if p.life <= 0:
+                    hit_sparks.remove(p)
+
+            # Keyboard P1 movement and shooting
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    return
+
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LCTRL and len(yellow_bullets) < MAX_BULLETS:
+                        bullet = pygame.Rect(
+                            yellow.x + yellow.width, yellow.y + yellow.height // 2 - 2, 14, 4)
+                        yellow_bullets.append(bullet)
+
+                if event.type == RED_HIT:
+                    red_health -= 1
+
+                if event.type == YELLOW_HIT:
+                    yellow_health -= 1
+
+            # Check winner conditions
+            if red_health <= 0:
+                level_won = True
+                run = False
+                break
+            elif yellow_health <= 0:
+                game_over = True
                 run = False
                 break
 
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LCTRL and len(yellow_bullets) < MAX_BULLETS:
-                    # Shoot right from ship nose
-                    bullet = pygame.Rect(
-                        yellow.x + yellow.width, yellow.y + yellow.height // 2 - 2, 14, 4)
-                    yellow_bullets.append(bullet)
+            # CPU P2 AI Steering and fire controls
+            cpu_speed = 1.6 + level * 0.2
+            target_y = yellow.y
+            if random.random() < 0.08:
+                target_y += random.uniform(-30, 30)
+            cpu_center = red.y + red.height // 2
+            if cpu_center < target_y:
+                red.y += min(cpu_speed, target_y - cpu_center)
+            elif cpu_center > target_y:
+                red.y -= min(cpu_speed, cpu_center - target_y)
+            red.y = max(0, min(HEIGHT - red.height - 15, red.y))
 
-                if event.key == pygame.K_RCTRL and len(red_bullets) < MAX_BULLETS:
-                    # Shoot left from ship nose
-                    bullet = pygame.Rect(
-                        red.x, red.y + red.height // 2 - 2, 14, 4)
-                    red_bullets.append(bullet)
+            # CPU Fire laser
+            shoot_prob = 0.015 + level * 0.003
+            if random.random() < shoot_prob and len(red_bullets) < MAX_BULLETS:
+                bullet = pygame.Rect(red.x, red.y + red.height // 2 - 2, 14, 4)
+                red_bullets.append(bullet)
 
-            if event.type == RED_HIT:
-                red_health -= 1
+            keys_pressed = pygame.key.get_pressed()
+            yellow_handle_movement(keys_pressed, yellow)
 
-            if event.type == YELLOW_HIT:
-                yellow_health -= 1
+            # Thruster flame P1 and CPU
+            if random.random() < 0.6:
+                thruster_particles.append(ThrusterParticle(yellow.x, yellow.y + SPACESHIP_HEIGHT // 2, NEON_BLUE))
+            if random.random() < 0.6:
+                thruster_particles.append(ThrusterParticle(red.x + SPACESHIP_WIDTH, red.y + SPACESHIP_HEIGHT // 2, NEON_PINK))
 
-        # Check winner conditions
-        winner_text = ""
-        winner_color = WHITE
-        if red_health <= 0:
-            winner_text = "FIGHTER I WINS!"
-            winner_color = NEON_BLUE
+            handle_bullets(yellow_bullets, red_bullets, yellow, red, hit_sparks, state_bag, obstacles)
 
-        if yellow_health <= 0:
-            winner_text = "FIGHTER II WINS!"
-            winner_color = NEON_PINK
+            if state_bag["shake_duration"] > 0:
+                offset_x = random.randint(-state_bag["shake_amount"], state_bag["shake_amount"])
+                offset_y = random.randint(-state_bag["shake_amount"], state_bag["shake_amount"])
+                state_bag["shake_duration"] -= 1
+            else:
+                offset_x = 0
+                offset_y = 0
 
-        if winner_text != "":
-            # Trigger final blast
+            if offset_x != 0 or offset_y != 0:
+                shaken_surface = pygame.Surface((WIDTH, HEIGHT))
+                draw_window(red, yellow, red_bullets, yellow_bullets, red_health, yellow_health, thruster_particles, hit_sparks, level, obstacles)
+                shaken_surface.blit(WIN, (0, 0))
+                WIN.fill(BLACK)
+                WIN.blit(shaken_surface, (offset_x, offset_y))
+                pygame.display.update()
+            else:
+                draw_window(red, yellow, red_bullets, yellow_bullets, red_health, yellow_health, thruster_particles, hit_sparks, level, obstacles)
+
+            await asyncio.sleep(0)
+
+        # Draw level victory / game over
+        if level_won:
             state_bag["shake_duration"] = 30
             state_bag["shake_amount"] = 12
-            await draw_winner(winner_text, winner_color)
-            break
+            score += 1000 + max(0, 1000 - elapsed_time * 5)
+            
+            if level >= max_levels:
+                # Game Victory!
+                if not score_submitted:
+                    score_submitted = True
+                    if arcade_api:
+                        arcade_api.submit_score("Galaxy Fight", score)
+                await draw_winner(f"GRID CHAMPION! SCORE: {score}", NEON_GREEN)
+            else:
+                # Level transition banner
+                overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+                pygame.draw.rect(overlay, (5, 5, 12, 215), (0, 0, WIDTH, HEIGHT))
+                WIN.blit(overlay, (0, 0))
 
-        keys_pressed = pygame.key.get_pressed()
-        yellow_handle_movement(keys_pressed, yellow)
-        red_handle_movement(keys_pressed, red)
+                card_w, card_h = 560, 240
+                card_x, card_y = (WIDTH - card_w) // 2, (HEIGHT - card_h) // 2
+                pygame.draw.rect(WIN, NEON_GREEN, (card_x, card_y, card_w, card_h), 3, border_radius=15)
+                draw_text = WINNER_FONT.render(f"STAGE {level} CLEARED!", 1, NEON_GREEN)
+                sub_text = HEALTH_FONT.render("PROCEEDING TO NEXT VECTOR GRID...", 1, WHITE)
+                WIN.blit(draw_text, (WIDTH // 2 - draw_text.get_width() // 2, card_y + 60))
+                WIN.blit(sub_text, (WIDTH // 2 - sub_text.get_width() // 2, card_y + 130))
+                pygame.display.update()
+                await asyncio.sleep(2.5)
+                level += 1
+                continue
+        elif game_over:
+            if not score_submitted:
+                score_submitted = True
+                if arcade_api:
+                    arcade_api.submit_score("Galaxy Fight", score)
+            await draw_winner("SYSTEM DEFEAT", NEON_PINK)
 
-        # Emit thruster particles
-        # Left Ship: nose is right, engine is left
-        if random.random() < 0.6:
-            thruster_particles.append(ThrusterParticle(yellow.x, yellow.y + SPACESHIP_HEIGHT // 2, NEON_BLUE))
-        # Right Ship: nose is left, engine is right
-        if random.random() < 0.6:
-            thruster_particles.append(ThrusterParticle(red.x + SPACESHIP_WIDTH, red.y + SPACESHIP_HEIGHT // 2, NEON_PINK))
-
-        handle_bullets(yellow_bullets, red_bullets, yellow, red, hit_sparks, state_bag)
-
-        # Handle screen shake
-        if state_bag["shake_duration"] > 0:
-            offset_x = random.randint(-state_bag["shake_amount"], state_bag["shake_amount"])
-            offset_y = random.randint(-state_bag["shake_amount"], state_bag["shake_amount"])
-            state_bag["shake_duration"] -= 1
-        else:
-            offset_x = 0
-            offset_y = 0
-
-        if offset_x != 0 or offset_y != 0:
-            shaken_surface = pygame.Surface((WIDTH, HEIGHT))
-            draw_window(red, yellow, red_bullets, yellow_bullets, red_health, yellow_health, thruster_particles, hit_sparks)
-            # Re-blit to shaken window
-            shaken_surface.blit(WIN, (0, 0))
-            WIN.fill(BLACK)
-            WIN.blit(shaken_surface, (offset_x, offset_y))
-            pygame.display.update()
-        else:
-            draw_window(red, yellow, red_bullets, yellow_bullets, red_health, yellow_health, thruster_particles, hit_sparks)
-
-        await asyncio.sleep(0)
-
-    pygame.quit()
+        # Wait for keypress R to reboot
+        waiting = True
+        while waiting:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    return
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_r:
+                        level = 1
+                        score = 0
+                        score_submitted = False
+                        start_time = time.time()
+                        waiting = False
+            await asyncio.sleep(0.02)
 
 
 if __name__ == "__main__":

@@ -204,25 +204,57 @@ def submit_score(score):
     else:
         print("[Snake] arcade_api not found, score not submitted.")
 
+def get_obstacles(level):
+    obstacles = []
+    if level == 1:
+        pass
+    elif level == 2:
+        for offset in range(3):
+            obstacles.extend([(3 + offset, 4), (4, 4 + offset)])
+            obstacles.extend([(GRID_WIDTH - 5 - offset, 4), (GRID_WIDTH - 5, 4 + offset)])
+            obstacles.extend([(3 + offset, GRID_HEIGHT - 5), (4, GRID_HEIGHT - 5 - offset)])
+            obstacles.extend([(GRID_WIDTH - 5 - offset, GRID_HEIGHT - 5), (GRID_WIDTH - 5, GRID_HEIGHT - 5 - offset)])
+    else:
+        # Procedural blocks
+        random.seed(level * 37)
+        num_pillars = min(10, level // 2 + 1)
+        for _ in range(num_pillars):
+            px = random.randint(5, GRID_WIDTH - 6)
+            py = random.randint(5, GRID_HEIGHT - 6)
+            length = random.randint(2, 5)
+            direction = random.choice([(1,0), (0,1)])
+            for i in range(length):
+                obstacles.append((px + direction[0]*i, py + direction[1]*i))
+    # Filter head spawn area
+    obstacles = list(set(obstacles))
+    obstacles = [o for o in obstacles if abs(o[0] - GRID_WIDTH//2) > 4 or abs(o[1] - GRID_HEIGHT//2) > 4]
+    return obstacles
+
 async def main():
     run = True
     clock = pygame.time.Clock()
     
     snake = Snake()
     food = Food()
-    food.randomize_position(snake.positions)
     particles = ParticleSystem()
     
     score = 0
     high_score = 0
+    level = 1
+    max_levels = 20
+    food_eaten = 0
+    game_won = False
     game_over = False
     score_submitted = False
     
-    # Base game speed (frames per second / ticks)
-    base_speed = 8
-    speed = base_speed
+    obstacles = get_obstacles(level)
+    food.randomize_position(snake.positions)
+    while food.position in obstacles:
+        food.randomize_position(snake.positions)
+        
+    base_speed = 6
+    speed = base_speed + level // 2
     
-    # Sound/Effect triggers
     def trigger_eat_effect():
         fx = food.position[0] * GRID_SIZE
         fy = food.position[1] * GRID_SIZE
@@ -237,11 +269,16 @@ async def main():
             elif event.type == pygame.KEYDOWN:
                 if game_over:
                     if event.key == pygame.K_r:
-                        # Reset game
+                        level = 1
+                        food_eaten = 0
+                        game_won = False
                         snake.reset()
+                        obstacles = get_obstacles(level)
                         food.randomize_position(snake.positions)
+                        while food.position in obstacles:
+                            food.randomize_position(snake.positions)
                         score = 0
-                        speed = base_speed
+                        speed = base_speed + level // 2
                         game_over = False
                         score_submitted = False
                     elif event.key == pygame.K_q:
@@ -253,22 +290,55 @@ async def main():
         if not game_over:
             # Move snake
             alive = snake.update()
-            if not alive:
+            if not alive or snake.positions[0] in obstacles:
                 game_over = True
             
             # Check food consumption
-            if snake.positions[0] == food.position:
+            if not game_over and snake.positions[0] == food.position:
                 snake.grow()
                 trigger_eat_effect()
                 score += 10
+                food_eaten += 1
                 if score > high_score:
                     high_score = score
-                food.randomize_position(snake.positions)
                 
-                # Dynamic speed scaling: increase speed every 40 points
-                speed = base_speed + (score // 40)
-                if speed > 22:
-                    speed = 22 # Cap speed
+                # Check level clear
+                target_food = 5 + level
+                if food_eaten >= target_food:
+                    if level >= max_levels:
+                        game_won = True
+                        game_over = True
+                    else:
+                        # Level Clear Screen Overlay
+                        overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+                        pygame.draw.rect(overlay, (5, 5, 10, 220), (0, 0, WIDTH, HEIGHT))
+                        WIN.blit(overlay, (0, 0))
+                        
+                        panel_rect = pygame.Rect(WIDTH // 4, HEIGHT // 3, WIDTH // 2, HEIGHT // 3)
+                        pygame.draw.rect(WIN, (15, 15, 25), panel_rect, border_radius=15)
+                        pygame.draw.rect(WIN, SNAKE_HEAD, panel_rect, 3, border_radius=15)
+                        
+                        title = FONT_LARGE.render(f"LEVEL {level} CLEARED", True, SNAKE_HEAD)
+                        sub = FONT_MEDIUM.render("NEXT GRID SECTOR INCOMING...", True, WHITE)
+                        WIN.blit(title, (WIDTH // 2 - title.get_width() // 2, HEIGHT // 2 - 40))
+                        WIN.blit(sub, (WIDTH // 2 - sub.get_width() // 2, HEIGHT // 2 + 10))
+                        
+                        pygame.display.flip()
+                        await asyncio.sleep(2.0)
+                        
+                        level += 1
+                        food_eaten = 0
+                        snake.reset()
+                        obstacles = get_obstacles(level)
+                        food.randomize_position(snake.positions)
+                        while food.position in obstacles:
+                            food.randomize_position(snake.positions)
+                        speed = base_speed + level // 2
+                        continue
+                
+                food.randomize_position(snake.positions)
+                while food.position in obstacles:
+                    food.randomize_position(snake.positions)
             
             particles.update()
         else:
@@ -280,43 +350,52 @@ async def main():
         WIN.fill(BG_COLOR)
         draw_grid(WIN)
         
+        # Draw obstacles
+        for obs in obstacles:
+            ox = obs[0] * GRID_SIZE
+            oy = obs[1] * GRID_SIZE
+            rect = pygame.Rect(ox, oy, GRID_SIZE, GRID_SIZE)
+            pygame.draw.rect(WIN, UI_BORDER, rect, border_radius=4)
+            pygame.draw.rect(WIN, WHITE, (ox + 3, oy + 3, GRID_SIZE - 6, GRID_SIZE - 6), border_radius=2)
+            
         # Draw game elements
         food.draw(WIN)
         snake.draw(WIN)
         particles.draw(WIN)
         
-        # Draw HUD (Neon banner at top or overlay)
-        # Draw Score
+        # Draw Score / HUD
         score_text = FONT_MEDIUM.render(f"SCORE: {score}", True, TEXT_COLOR)
-        high_score_text = FONT_MEDIUM.render(f"HIGH: {high_score}", True, TEXT_COLOR)
+        level_text = FONT_MEDIUM.render(f"LEVEL: {level}/20", True, WHITE)
         
-        # Draw simple semi-transparent back panel for text
         hud_panel = pygame.Surface((WIDTH, 40), pygame.SRCALPHA)
         pygame.draw.rect(hud_panel, (10, 10, 20, 180), (0, 0, WIDTH, 40))
         WIN.blit(hud_panel, (0, 0))
         pygame.draw.line(WIN, UI_BORDER, (0, 40), (WIDTH, 40), 2)
         
         WIN.blit(score_text, (20, 5))
-        WIN.blit(high_score_text, (WIDTH - high_score_text.get_width() - 20, 5))
+        WIN.blit(level_text, (WIDTH // 2 - level_text.get_width() // 2, 5))
         
         # Game Over Screen Overlay
         if game_over:
-            # Draw semi-transparent black overlay
             overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
             pygame.draw.rect(overlay, (5, 5, 10, 200), (0, 0, WIDTH, HEIGHT))
             WIN.blit(overlay, (0, 0))
             
-            # Draw glowing game over panel
             panel_rect = pygame.Rect(WIDTH // 4, HEIGHT // 4, WIDTH // 2, HEIGHT // 2)
             pygame.draw.rect(WIN, (15, 15, 25), panel_rect, border_radius=15)
-            pygame.draw.rect(WIN, FOOD_COLOR, panel_rect, 3, border_radius=15)
             
-            title = FONT_LARGE.render("GAME OVER", True, FOOD_COLOR)
-            score_summary = FONT_MEDIUM.render(f"FINAL SCORE: {score}", True, WHITE)
+            if game_won:
+                pygame.draw.rect(WIN, SNAKE_HEAD, panel_rect, 3, border_radius=15)
+                title = FONT_LARGE.render("GRID MASTER", True, SNAKE_HEAD)
+                score_summary = FONT_MEDIUM.render(f"VICTORY SCORE: {score}", True, WHITE)
+            else:
+                pygame.draw.rect(WIN, FOOD_COLOR, panel_rect, 3, border_radius=15)
+                title = FONT_LARGE.render("GAME OVER", True, FOOD_COLOR)
+                score_summary = FONT_MEDIUM.render(f"FINAL SCORE: {score}", True, WHITE)
+                
             restart_instruction = FONT_SMALL.render("PRESS 'R' TO REPLAY", True, TEXT_COLOR)
             quit_instruction = FONT_SMALL.render("PRESS 'Q' TO QUIT", True, TEXT_COLOR)
             
-            # Draw elements centered in panel
             WIN.blit(title, (WIDTH // 2 - title.get_width() // 2, HEIGHT // 2 - 80))
             WIN.blit(score_summary, (WIDTH // 2 - score_summary.get_width() // 2, HEIGHT // 2 - 20))
             WIN.blit(restart_instruction, (WIDTH // 2 - restart_instruction.get_width() // 2, HEIGHT // 2 + 40))
@@ -324,10 +403,10 @@ async def main():
             
         pygame.display.flip()
         
-        # Control framerate (clock.tick(speed))
-        # Note: pygbag runs perfectly using this standard clock tick, but to yield execution, we MUST do await asyncio.sleep(0)
         clock.tick(speed if not game_over else 15)
         await asyncio.sleep(0)
+
+    pygame.quit()
 
 if __name__ == "__main__":
     asyncio.run(main())

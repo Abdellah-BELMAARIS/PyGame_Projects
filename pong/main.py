@@ -149,7 +149,7 @@ def draw_neon_grid(surface):
             continue
         pygame.draw.rect(surface, (50, 50, 80), (WIDTH // 2 - 2, i, 4, HEIGHT // 15), border_radius=2)
 
-def draw(win, paddles, ball, left_score, right_score, sparks):
+def draw(win, paddles, ball, left_score, right_score, sparks, level=1, obstacle_y=0):
     draw_neon_grid(win)
 
     # Draw Scores with a futuristic glowing style
@@ -165,6 +165,16 @@ def draw(win, paddles, ball, left_score, right_score, sparks):
     
     win.blit(right_glow, (WIDTH * (3/4) - right_score_text.get_width() // 2 + 2, 22))
     win.blit(right_score_text, (WIDTH * (3/4) - right_score_text.get_width() // 2, 20))
+
+    # Level indicator at top center
+    level_text = SCORE_FONT.render(f"LEVEL {level}/20", 1, WHITE)
+    win.blit(level_text, (WIDTH // 2 - level_text.get_width() // 2, 20))
+
+    # Center barrier
+    if level >= 5:
+        obstacle_rect = pygame.Rect(WIDTH // 2 - 10, obstacle_y, 20, 80)
+        pygame.draw.rect(win, NEON_GREEN, obstacle_rect, border_radius=4)
+        pygame.draw.rect(win, WHITE, (WIDTH // 2 - 7, obstacle_y + 3, 14, 74), border_radius=2)
 
     for paddle in paddles:
         paddle.draw(win)
@@ -230,11 +240,20 @@ def handle_paddle_movement(keys, left_paddle, right_paddle):
     if keys[pygame.K_s] and left_paddle.y + left_paddle.VEL + left_paddle.height <= HEIGHT:
         left_paddle.move(up=False)
 
-    # Right Paddle controls: Arrow keys
-    if keys[pygame.K_UP] and right_paddle.y - right_paddle.VEL >= 0:
-        right_paddle.move(up=True)
-    if keys[pygame.K_DOWN] and right_paddle.y + right_paddle.VEL + right_paddle.height <= HEIGHT:
-        right_paddle.move(up=False)
+    # Right Paddle CPU AI controls
+    cpu_speed = 2.0 + level * 0.22
+    error_margin = max(4, 40 - level * 2)
+    target_y = ball.y
+    if random.random() < 0.08:
+        target_y += random.uniform(-error_margin, error_margin)
+        
+    cpu_center = right_paddle.y + right_paddle.height // 2
+    if cpu_center < target_y - 12:
+        right_paddle.y += min(cpu_speed, target_y - cpu_center)
+    elif cpu_center > target_y + 12:
+        right_paddle.y -= min(cpu_speed, cpu_center - target_y)
+        
+    right_paddle.y = max(0, min(HEIGHT - right_paddle.height, right_paddle.y))
 
 async def main():
     run = True
@@ -247,9 +266,17 @@ async def main():
     left_score = 0
     right_score = 0
     
-    sparks = []
+    level = 1
+    max_levels = 20
+    game_won = False
+    game_over = False
+    score_submitted = False
+    start_time = time.time()
     
-    # Screen shake parameters
+    obstacle_y = HEIGHT // 2
+    obstacle_direction = 1
+    
+    sparks = []
     shake_duration = 0
     shake_amount = 0
     
@@ -257,9 +284,29 @@ async def main():
 
     while run:
         clock.tick(FPS)
+        elapsed_time = int(time.time() - start_time)
+        
+        # Update obstacle position starting from level 5
+        if level >= 5:
+            obstacle_speed = 1.2 + level * 0.12
+            obstacle_y += obstacle_direction * obstacle_speed
+            if obstacle_y < 40 or obstacle_y > HEIGHT - 120:
+                obstacle_direction *= -1
+                
+            # Ball - Obstacle collision
+            ball_rect = pygame.Rect(ball.x - ball.radius, ball.y - ball.radius, ball.radius*2, ball.radius*2)
+            obstacle_rect = pygame.Rect(WIDTH // 2 - 10, obstacle_y, 20, 80)
+            if ball_rect.colliderect(obstacle_rect):
+                ball.x_vel *= -1
+                if ball.x_vel > 0:
+                    ball.x = obstacle_rect.right + ball.radius + 2
+                else:
+                    ball.x = obstacle_rect.left - ball.radius - 2
+                for _ in range(8):
+                    sparks.append(HitSpark(ball.x, ball.y, NEON_GREEN))
         
         # Draw everything to game surface
-        draw(game_surface, [left_paddle, right_paddle], ball, left_score, right_score, sparks)
+        draw(game_surface, [left_paddle, right_paddle], ball, left_score, right_score, sparks, level, obstacle_y)
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -268,11 +315,26 @@ async def main():
 
         keys = pygame.key.get_pressed()
         handle_paddle_movement(keys, left_paddle, right_paddle)
+        
+        # Update CPU AI paddle
+        # Right Paddle CPU AI controls
+        cpu_speed = 2.0 + level * 0.22
+        error_margin = max(4, 40 - level * 2)
+        target_y = ball.y
+        if random.random() < 0.08:
+            target_y += random.uniform(-error_margin, error_margin)
+            
+        cpu_center = right_paddle.y + right_paddle.height // 2
+        if cpu_center < target_y - 12:
+            right_paddle.y += min(cpu_speed, target_y - cpu_center)
+        elif cpu_center > target_y + 12:
+            right_paddle.y -= min(cpu_speed, cpu_center - target_y)
+            
+        right_paddle.y = max(0, min(HEIGHT - right_paddle.height, right_paddle.y))
 
         ball.move()
         handle_collision(ball, left_paddle, right_paddle, sparks)
 
-        # Update sparks
         for spark in sparks[:]:
             spark.update()
             if spark.life <= 0:
@@ -282,59 +344,111 @@ async def main():
         if ball.x < 0:
             right_score += 1
             ball.reset()
-            # Trigger screen shake
             shake_duration = 15
             shake_amount = 8
         elif ball.x > WIDTH:
             left_score += 1
             ball.reset()
-            # Trigger screen shake
             shake_duration = 15
             shake_amount = 8
 
-        # Check Winner
+        # Check Winner / Level clear
         won = False
-        if left_score >= WINNING_SCORE:
+        if left_score >= 3:
+            if level >= max_levels:
+                game_won = True
+                won = True
+            else:
+                # Level Clear transition screen
+                overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+                pygame.draw.rect(overlay, (5, 5, 15, 220), (0, 0, WIDTH, HEIGHT))
+                game_surface.blit(overlay, (0, 0))
+                
+                banner_rect = pygame.Rect(WIDTH//4, HEIGHT//3, WIDTH//2, HEIGHT//3)
+                pygame.draw.rect(game_surface, (15, 15, 30), banner_rect, border_radius=15)
+                pygame.draw.rect(game_surface, NEON_GREEN, banner_rect, 3, border_radius=15)
+                
+                text = MESSAGE_FONT.render(f"LEVEL {level} CLEARED!", 1, NEON_GREEN)
+                sub_text = MESSAGE_FONT.render("LOADING NEXT GRID SECTOR...", 1, WHITE)
+                
+                game_surface.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2 - 40))
+                game_surface.blit(sub_text, (WIDTH // 2 - sub_text.get_width() // 2, HEIGHT // 2 + 10))
+                
+                WIN.fill((0, 0, 0))
+                WIN.blit(game_surface, (0, 0))
+                pygame.display.update()
+                
+                await asyncio.sleep(2.0)
+                level += 1
+                ball.MAX_VEL = 9 + level * 0.2
+                ball.reset()
+                left_paddle.reset()
+                right_paddle.reset()
+                left_score = 0
+                right_score = 0
+                continue
+        elif right_score >= 3:
+            game_over = True
             won = True
-            win_text = "BLUE PLAYER WINS!"
-            win_color = NEON_BLUE
-        elif right_score >= WINNING_SCORE:
-            won = True
-            win_text = "PINK PLAYER WINS!"
-            win_color = NEON_PINK
 
         if won:
-            # Render Winner Overlay
             overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
             pygame.draw.rect(overlay, (5, 5, 15, 220), (0, 0, WIDTH, HEIGHT))
             game_surface.blit(overlay, (0, 0))
             
-            # Winner Banner
             banner_rect = pygame.Rect(WIDTH//4, HEIGHT//3, WIDTH//2, HEIGHT//3)
             pygame.draw.rect(game_surface, (15, 15, 30), banner_rect, border_radius=15)
+            
+            if game_won:
+                win_text = "GRID GRAND CHAMPION!"
+                win_color = NEON_GREEN
+                if not score_submitted:
+                    score_submitted = True
+                    final_score = max(100, 10000 - elapsed_time * 5)
+                    if arcade_api:
+                        arcade_api.submit_score("Pong", final_score)
+            else:
+                win_text = "SYSTEM DEFEAT"
+                win_color = NEON_PINK
+                
             pygame.draw.rect(game_surface, win_color, banner_rect, 3, border_radius=15)
             
             text = MESSAGE_FONT.render(win_text, 1, win_color)
             shadow_text = MESSAGE_FONT.render(win_text, 1, (10, 10, 10))
-            restart_hint = MESSAGE_FONT.render("RESETTING GAME...", 1, WHITE)
+            restart_hint = MESSAGE_FONT.render("PRESS 'R' TO REBOOT GRID", 1, WHITE)
             
             game_surface.blit(shadow_text, (WIDTH // 2 - text.get_width() // 2 + 2, HEIGHT // 2 - 40 + 2))
             game_surface.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2 - 40))
             game_surface.blit(restart_hint, (WIDTH // 2 - restart_hint.get_width() // 2, HEIGHT // 2 + 20))
             
-            # Draw it to main screen and pause
             WIN.fill((0, 0, 0))
             WIN.blit(game_surface, (0, 0))
             pygame.display.update()
             
-            await asyncio.sleep(4)
-            ball.reset()
-            left_paddle.reset()
-            right_paddle.reset()
-            left_score = 0
-            right_score = 0
+            waiting_for_r = True
+            while waiting_for_r:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        run = False
+                        waiting_for_r = False
+                        break
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_r:
+                            level = 1
+                            ball.MAX_VEL = 9
+                            ball.reset()
+                            left_paddle.reset()
+                            right_paddle.reset()
+                            left_score = 0
+                            right_score = 0
+                            game_won = False
+                            game_over = False
+                            score_submitted = False
+                            start_time = time.time()
+                            waiting_for_r = False
+                await asyncio.sleep(0.02)
+            continue
 
-        # Handle screen shake offset
         if shake_duration > 0:
             offset_x = random.randint(-shake_amount, shake_amount)
             offset_y = random.randint(-shake_amount, shake_amount)
@@ -343,7 +457,6 @@ async def main():
             offset_x = 0
             offset_y = 0
 
-        # Blit the game surface to window with shake offset
         WIN.fill((0, 0, 0))
         WIN.blit(game_surface, (offset_x, offset_y))
         pygame.display.update()

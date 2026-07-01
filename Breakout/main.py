@@ -173,11 +173,11 @@ class PowerUpPod:
             pygame.draw.line(surface, WHITE, (self.rect.x + 4, self.rect.centery + 3), (self.rect.x + 18, self.rect.centery + 3), 3)
 
 class Ball:
-    def __init__(self, x, y):
+    def __init__(self, x, y, speed=6):
         self.x = x
         self.y = y
         self.radius = 8
-        self.speed = 6
+        self.speed = speed
         angle = random.uniform(-math.pi/4, -3*math.pi/4)
         self.vx = self.speed * math.cos(angle)
         self.vy = self.speed * math.sin(angle)
@@ -352,6 +352,10 @@ async def main():
 
     active_powerup_banner = ""
     banner_timer = 0
+    level = 1
+    max_levels = 20
+    game_won = False
+    score_submitted = False
 
     # Game layout surface
     game_surface = pygame.Surface((WIDTH, HEIGHT))
@@ -366,23 +370,25 @@ async def main():
     def build_brick_matrix():
         bricks.clear()
         cols = 10
-        rows = 6
+        rows = min(8, 4 + level // 3)
         brick_w = 70
         brick_h = 24
         x_start = (WIDTH - (cols * (brick_w + 6))) // 2
         y_start = 80
+        
+        armored_chance = min(0.5, 0.15 + level * 0.02)
+        explosive_chance = min(0.3, 0.08 + level * 0.01)
         
         for r in range(rows):
             for c in range(cols):
                 bx = x_start + c * (brick_w + 6)
                 by = y_start + r * (brick_h + 6)
                 
-                # Determine brick type procedurally
                 rand_val = random.random()
-                if rand_val < 0.12:
+                if rand_val < explosive_chance:
                     cat = 'EXPLOSIVE'
                     score_val = 150
-                elif rand_val < 0.28:
+                elif rand_val < explosive_chance + armored_chance:
                     cat = 'ARMORED'
                     score_val = 200
                 else:
@@ -452,12 +458,15 @@ async def main():
                 
                 if event.key == pygame.K_r:
                     # Restart Game Core
+                    level = 1
+                    game_won = False
                     score = 0
                     lives = 3
                     game_over = False
                     victory = False
                     shield_active = False
-                    balls = [Ball(WIDTH // 2, HEIGHT - 100)]
+                    ball_speed = 5.5 + level * 0.22
+                    balls = [Ball(WIDTH // 2, HEIGHT - 100, ball_speed)]
                     lasers.clear()
                     powerups.clear()
                     particles.clear()
@@ -465,6 +474,7 @@ async def main():
                     build_brick_matrix()
                     active_powerup_banner = ""
                     banner_timer = 0
+                    score_submitted = False
                     
                 if event.key == pygame.K_SPACE and not game_over and not victory:
                     # Trigger laser if active
@@ -652,14 +662,14 @@ async def main():
                         if len(balls) > 0:
                             b_source = balls[0]
                             # Spawn left/right angled balls
-                            b1 = Ball(b_source.x, b_source.y)
+                            b1 = Ball(b_source.x, b_source.y, b_source.speed)
                             b1.vx, b1.vy = -4, -4
-                            b2 = Ball(b_source.x, b_source.y)
+                            b2 = Ball(b_source.x, b_source.y, b_source.speed)
                             b2.vx, b2.vy = 4, -4
                             balls.append(b1)
                             balls.append(b2)
                         else:
-                            balls.append(Ball(WIDTH//2, HEIGHT - 100))
+                            balls.append(Ball(WIDTH//2, HEIGHT - 100, 5.5 + level * 0.22))
                     elif p_pod.type == 'LASER':
                         active_powerup_banner = "LASER CANNONS READY (SPACE / CLICK)"
                         banner_timer = 120
@@ -682,14 +692,53 @@ async def main():
                         arcade_api.submit_score("Neon Breakout", score)
                 else:
                     # Spawn new ball
-                    balls.append(Ball(WIDTH // 2, HEIGHT - 120))
+                    balls.append(Ball(WIDTH // 2, HEIGHT - 120, 5.5 + level * 0.22))
 
-            # 6. Check Victory
+            # Check Victory / Level Clear
             if len(bricks) == 0:
-                victory = True
-                play_sfx("victory")
-                if arcade_api:
-                    arcade_api.submit_score("Neon Breakout", score)
+                if level >= max_levels:
+                    game_won = True
+                    victory = True
+                    play_sfx("victory")
+                    if not score_submitted:
+                        score_submitted = True
+                        if arcade_api:
+                            arcade_api.submit_score("Neon Breakout", score + 5000)
+                else:
+                    # Level clear transition overlay
+                    overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+                    pygame.draw.rect(overlay, (5, 5, 12, 220), (0, 0, WIDTH, HEIGHT))
+                    game_surface.fill(DARK_BG)
+                    for p in particles:
+                        p.draw(game_surface)
+                    game_surface.blit(overlay, (0, 0))
+                    
+                    card_rect = pygame.Rect(WIDTH // 4, HEIGHT // 3, WIDTH // 2, HEIGHT // 3)
+                    pygame.draw.rect(game_surface, (15, 15, 30), card_rect, border_radius=15)
+                    pygame.draw.rect(game_surface, NEON_GREEN, card_rect, 3, border_radius=15)
+                    
+                    title = FONT_LARGE.render(f"LEVEL {level} CLEARED", True, NEON_GREEN)
+                    sub = FONT_HUD.render("PREPARING NEXT COMBAT CORE...", True, WHITE)
+                    game_surface.blit(title, (WIDTH // 2 - title.get_width() // 2, HEIGHT // 3 + 30))
+                    game_surface.blit(sub, (WIDTH // 2 - sub.get_width() // 2, HEIGHT // 3 + 90))
+                    
+                    WIN.fill((0, 0, 0))
+                    WIN.blit(game_surface, (0, 0))
+                    pygame.display.update()
+                    
+                    await asyncio.sleep(2.0)
+                    
+                    level += 1
+                    build_brick_matrix()
+                    balls.clear()
+                    balls.append(Ball(WIDTH // 2, HEIGHT - 100, 5.5 + level * 0.22))
+                    lasers.clear()
+                    powerups.clear()
+                    particles.clear()
+                    paddle = Paddle()
+                    active_powerup_banner = ""
+                    banner_timer = 0
+                    continue
 
             # 7. Update explosive brick flashing
             for brick in bricks:
@@ -759,10 +808,16 @@ async def main():
         game_surface.blit(score_lbl, (20, 12))
         game_surface.blit(score_val, (20, 32))
 
+        # Stage indicator
+        level_lbl = FONT_HUD.render("STAGE SIGNAL", True, GOLD)
+        level_val = FONT_HUD.render(f"STAGE {level}/20", True, WHITE)
+        game_surface.blit(level_lbl, (WIDTH // 2 - 180, 12))
+        game_surface.blit(level_val, (WIDTH // 2 - 180, 32))
+
         # Center Powerup Banner
         if active_powerup_banner:
             banner_surf = FONT_HUD.render(active_powerup_banner, True, NEON_GREEN if "SHIELD" in active_powerup_banner or "SAFETY" in active_powerup_banner else NEON_PINK)
-            game_surface.blit(banner_surf, (WIDTH//2 - banner_surf.get_width()//2, 22))
+            game_surface.blit(banner_surf, (WIDTH // 2 + 10, 22))
 
         # Lives indicator
         lives_lbl = FONT_HUD.render("MATRIX CORES", True, NEON_PINK)
@@ -785,11 +840,11 @@ async def main():
             game_surface.blit(overlay, (0, 0))
 
             banner_rect = pygame.Rect(WIDTH // 4, HEIGHT // 3, WIDTH // 2, HEIGHT // 3)
-            bg_border = NEON_GREEN if victory else NEON_PINK
+            bg_border = NEON_GREEN if game_won else NEON_PINK
             pygame.draw.rect(game_surface, (15, 15, 30), banner_rect, border_radius=15)
             pygame.draw.rect(game_surface, bg_border, banner_rect, 3, border_radius=15)
 
-            title_str = "GRID CLEARED" if victory else "MATRIX OFFLINE"
+            title_str = "GRID CLEARED" if game_won else "MATRIX OFFLINE"
             over_title = FONT_LARGE.render(title_str, True, bg_border)
             final_score_txt = FONT_HUD.render(f"FINAL SCORE: {score}", True, WHITE)
             restart_hint = FONT_HUD.render("PRESS 'R' TO RESTART SYSTEM", True, NEON_BLUE)

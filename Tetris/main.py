@@ -135,6 +135,7 @@ class TetrisGame:
         self.level = 1
         self.lines_cleared = 0
         self.game_over = False
+        self.game_won = False
         self.bag = []
         
         self.current_piece = self.get_new_piece()
@@ -300,7 +301,10 @@ class TetrisGame:
         self.score += scoring.get(count, 800) * self.level
         
         # Increase level every 10 lines
-        self.level = (self.lines_cleared // 10) + 1
+        self.level = min(20, (self.lines_cleared // 10) + 1)
+        if self.lines_cleared >= 200:
+            self.game_won = True
+            self.game_over = True
         
         # Screen shake on multi-line clears
         self.shake_duration = count * 6
@@ -418,7 +422,7 @@ class TetrisGame:
         pygame.draw.rect(surface, (15, 15, 26), (WIDTH - 180, stats_y + 95, 140, 75), border_radius=8)
         pygame.draw.rect(surface, GRID_BORDER_COLOR, (WIDTH - 180, stats_y + 95, 140, 75), 1, border_radius=8)
         level_lbl = FONT_SMALL.render("LEVEL", True, GOLD)
-        level_val = FONT_MEDIUM.render(str(self.level), True, WHITE)
+        level_val = FONT_MEDIUM.render(f"{self.level}/20", True, WHITE)
         surface.blit(level_lbl, (WIDTH - 180 + 10, stats_y + 95 + 8))
         surface.blit(level_val, (WIDTH - 180 + 10, stats_y + 95 + 32))
 
@@ -575,10 +579,14 @@ async def main():
             
             over_rect = pygame.Rect(WIDTH // 4, HEIGHT // 3, WIDTH // 2, HEIGHT // 3)
             pygame.draw.rect(game_surface, (15, 15, 30), over_rect, border_radius=15)
-            pygame.draw.rect(game_surface, (255, 50, 50), over_rect, 3, border_radius=15)
-            
-            over_title = FONT_LARGE.render("GRID LOCKED", True, (255, 50, 50))
-            final_score_text = FONT_MEDIUM.render(f"FINAL SCORE: {game.score}", True, WHITE)
+            if game.game_won:
+                pygame.draw.rect(game_surface, (0, 255, 100), over_rect, 3, border_radius=15)
+                over_title = FONT_LARGE.render("GRID MASTER", True, (0, 255, 100))
+                final_score_text = FONT_MEDIUM.render(f"VICTORY SCORE: {game.score}", True, WHITE)
+            else:
+                pygame.draw.rect(game_surface, (255, 50, 50), over_rect, 3, border_radius=15)
+                over_title = FONT_LARGE.render("GRID LOCKED", True, (255, 50, 50))
+                final_score_text = FONT_MEDIUM.render(f"FINAL SCORE: {game.score}", True, WHITE)
             restart_hint = FONT_SMALL.render("PRESS 'R' TO RESTART", True, TEXT_COLOR)
             
             game_surface.blit(over_title, (WIDTH // 2 - over_title.get_width() // 2, HEIGHT // 3 + 30))

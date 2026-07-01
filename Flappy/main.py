@@ -132,15 +132,17 @@ class FlappyBird:
 
 
 class Pipe:
-    def __init__(self, x):
+    def __init__(self, x, level=1):
         self.x = x
         self.width = 75
-        self.gap = 180
+        # Gap becomes narrow as level increases
+        self.gap = max(130, 185 - (level - 1) * 3)
         # Random heights for top and bottom pipes
         self.top_height = random.randint(100, HEIGHT - self.gap - 100)
         self.bottom_y = self.top_height + self.gap
         self.bottom_height = HEIGHT - self.bottom_y
-        self.speed = 3.5
+        # Speed increases with level
+        self.speed = 3.5 + (level - 1) * 0.12
         self.passed = False
 
     def update(self):
@@ -169,7 +171,9 @@ async def main():
     clock = pygame.time.Clock()
 
     bird = FlappyBird()
-    pipes = [Pipe(WIDTH + 100), Pipe(WIDTH + 450)]
+    level = 1
+    game_won = False
+    pipes = [Pipe(WIDTH + 100, level), Pipe(WIDTH + 450, level)]
     particles = []
     
     score = 0
@@ -209,7 +213,9 @@ async def main():
                 if game_over:
                     if event.key == pygame.K_r:
                         bird = FlappyBird()
-                        pipes = [Pipe(WIDTH + 100), Pipe(WIDTH + 450)]
+                        level = 1
+                        game_won = False
+                        pipes = [Pipe(WIDTH + 100, level), Pipe(WIDTH + 450, level)]
                         score = 0
                         game_over = False
                         particles.clear()
@@ -254,7 +260,7 @@ async def main():
                     pipes.remove(pipe)
                     # Find furthest pipe x to spawn 350px after it
                     furthest_x = max(p.x for p in pipes) if pipes else WIDTH
-                    pipes.append(Pipe(furthest_x + 350))
+                    pipes.append(Pipe(furthest_x + 350, level))
 
             # Check floor crash
             if bird.y + bird.radius >= HEIGHT:
@@ -287,6 +293,45 @@ async def main():
                             particles.append(ExplosionSpark(bird.x, bird.y, GOLD))
                         break
 
+            # Check level clear
+            if not game_over and score >= level * 5:
+                if level >= 20:
+                    game_won = True
+                    game_over = True
+                    if not score_submitted:
+                        score_submitted = True
+                        if arcade_api:
+                            arcade_api.submit_score("Flappy Neon", score + 5000)
+                else:
+                    # Level clear transition overlay
+                    overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+                    pygame.draw.rect(overlay, (5, 5, 12, 210), (0, 0, WIDTH, HEIGHT))
+                    game_surface.fill(DARK_BG)
+                    for p in particles:
+                        p.draw(game_surface)
+                    game_surface.blit(overlay, (0, 0))
+                    
+                    card_rect = pygame.Rect(WIDTH//4, HEIGHT//3, WIDTH//2, HEIGHT//3)
+                    pygame.draw.rect(game_surface, (15, 15, 30), card_rect, border_radius=15)
+                    pygame.draw.rect(game_surface, NEON_GREEN, card_rect, 3, border_radius=15)
+                    
+                    title = FONT_LARGE.render(f"LEVEL {level} CLEARED", True, NEON_GREEN)
+                    sub = FONT_HUD.render("NEXT CYBERNETIC CHANNEL CHARGING...", True, WHITE)
+                    game_surface.blit(title, (WIDTH // 2 - title.get_width() // 2, HEIGHT // 3 + 35))
+                    game_surface.blit(sub, (WIDTH // 2 - sub.get_width() // 2, HEIGHT // 3 + 105))
+                    
+                    WIN.fill((0, 0, 0))
+                    WIN.blit(game_surface, (0, 0))
+                    pygame.display.update()
+                    
+                    await asyncio.sleep(2.0)
+                    level += 1
+                    bird.y = HEIGHT // 2
+                    bird.vel = 0
+                    pipes = [Pipe(WIDTH + 100, level), Pipe(WIDTH + 450, level)]
+                    particles.clear()
+                    continue
+
             if game_over and not score_submitted:
                 score_submitted = True
                 if arcade_api:
@@ -314,8 +359,10 @@ async def main():
 
         # Draw HUD
         score_txt = FONT_HUD.render(f"SCORE: {score}", 1, NEON_BLUE)
+        level_txt = FONT_HUD.render(f"LEVEL: {level}/20", 1, GOLD)
         best_txt = FONT_HUD.render(f"BEST: {high_score}", 1, GOLD)
         game_surface.blit(score_txt, (25, 25))
+        game_surface.blit(level_txt, (WIDTH // 2 - level_txt.get_width() // 2, 25))
         game_surface.blit(best_txt, (WIDTH - best_txt.get_width() - 25, 25))
 
         # Draw Game Over Banner
@@ -326,10 +373,16 @@ async def main():
 
             over_rect = pygame.Rect(WIDTH // 4, HEIGHT // 3, WIDTH // 2, HEIGHT // 3)
             pygame.draw.rect(game_surface, (15, 15, 30), over_rect, border_radius=15)
-            pygame.draw.rect(game_surface, NEON_PINK, over_rect, 3, border_radius=15)
-
-            over_title = FONT_LARGE.render("WING DAMAGE", True, NEON_PINK)
-            final_lbl = FONT_HUD.render(f"FINAL SCORE: {score}", True, WHITE)
+            
+            if game_won:
+                pygame.draw.rect(game_surface, NEON_GREEN, over_rect, 3, border_radius=15)
+                over_title = FONT_LARGE.render("CORE RESTORED", True, NEON_GREEN)
+                final_lbl = FONT_HUD.render(f"VICTORY SCORE: {score}", True, WHITE)
+            else:
+                pygame.draw.rect(game_surface, NEON_PINK, over_rect, 3, border_radius=15)
+                over_title = FONT_LARGE.render("WING DAMAGE", True, NEON_PINK)
+                final_lbl = FONT_HUD.render(f"FINAL SCORE: {score}", True, WHITE)
+                
             restart_hint = FONT_HUD.render("PRESS 'R' TO RESTORE CORES", True, NEON_BLUE)
 
             game_surface.blit(over_title, (WIDTH // 2 - over_title.get_width() // 2, HEIGHT // 3 + 35))

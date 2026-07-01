@@ -93,11 +93,13 @@ class MineSparkle:
 
 
 class Cell:
-    def __init__(self, row, col):
+    def __init__(self, row, col, rows, cols):
         self.row = row
         self.col = col
-        self.x = col * GRID_SIZE + (WIDTH - COLS * GRID_SIZE) // 2
-        self.y = row * GRID_SIZE + HUD_HEIGHT + 20
+        grid_w = cols * GRID_SIZE
+        grid_h = rows * GRID_SIZE
+        self.x = col * GRID_SIZE + (WIDTH - grid_w) // 2
+        self.y = row * GRID_SIZE + HUD_HEIGHT + 20 + (500 - grid_h) // 2
         
         self.is_mine = False
         self.revealed = False
@@ -108,21 +110,17 @@ class Cell:
         rect = pygame.Rect(self.x + 2, self.y + 2, GRID_SIZE - 4, GRID_SIZE - 4)
         
         if self.revealed:
-            # Uncovered cell
             pygame.draw.rect(surface, DARK_CELL, rect, border_radius=6)
             pygame.draw.rect(surface, (40, 40, 60), rect, 1, border_radius=6)
             
             if self.is_mine:
-                # Mine exploded! Red circle/skull
                 pygame.draw.circle(surface, NEON_PINK, (self.x + GRID_SIZE//2, self.y + GRID_SIZE//2), GRID_SIZE//2 - 10)
                 pygame.draw.circle(surface, WHITE, (self.x + GRID_SIZE//2, self.y + GRID_SIZE//2), 4)
             elif self.neighbor_mines > 0:
-                # Number text
                 color = NUM_COLORS.get(self.neighbor_mines, WHITE)
                 text = FONT_CELL.render(str(self.neighbor_mines), 1, color)
                 surface.blit(text, (self.x + (GRID_SIZE/2 - text.get_width()/2), self.y + (GRID_SIZE/2 - text.get_height()/2)))
         else:
-            # Covered cell (neon outlined button)
             pygame.draw.rect(surface, (12, 18, 42), rect, border_radius=6)
             border_color = NEON_BLUE
             if self.flagged:
@@ -130,7 +128,6 @@ class Cell:
             pygame.draw.rect(surface, border_color, rect, 2, border_radius=6)
 
             if self.flagged:
-                # Draw glowing orange flag triangle
                 center_x = self.x + GRID_SIZE // 2
                 center_y = self.y + GRID_SIZE // 2
                 p1 = (center_x - 6, center_y + 8)
@@ -140,11 +137,28 @@ class Cell:
                 pygame.draw.line(surface, ORANGE, (center_x - 6, center_y - 8), (center_x - 6, center_y + 10), 2)
 
 
+def get_level_params(lvl):
+    if lvl == 1:
+        return (6, 6, 4)
+    elif lvl == 2:
+        return (7, 7, 6)
+    elif lvl == 3:
+        return (8, 8, 8)
+    elif lvl == 4:
+        return (9, 9, 10)
+    else:
+        # 10x10 with increasing mine density
+        mines = min(45, 10 + lvl * 1.5)
+        return (10, 10, int(mines))
+
+
 class MinesweeperGame:
-    def __init__(self):
-        self.grid = [[Cell(r, c) for c in range(COLS)] for r in range(ROWS)]
-        self.mines_left = NUM_MINES
-        self.cells_to_reveal = ROWS * COLS - NUM_MINES
+    def __init__(self, level=1):
+        self.level = level
+        self.rows, self.cols, self.num_mines = get_level_params(level)
+        self.grid = [[Cell(r, c, self.rows, self.cols) for c in range(self.cols)] for r in range(self.rows)]
+        self.mines_left = self.num_mines
+        self.cells_to_reveal = self.rows * self.cols - self.num_mines
         self.game_over = False
         self.victory = False
         self.particles = []
@@ -153,13 +167,11 @@ class MinesweeperGame:
         self.first_click = True
 
     def populate_mines(self, start_r, start_c):
-        # Place mines excluding the starting click neighborhood to ensure safe start
         placed = 0
-        while placed < NUM_MINES:
-            r = random.randint(0, ROWS - 1)
-            c = random.randint(0, COLS - 1)
+        while placed < self.num_mines:
+            r = random.randint(0, self.rows - 1)
+            c = random.randint(0, self.cols - 1)
             
-            # Avoid start neighborhood
             if abs(r - start_r) <= 1 and abs(c - start_c) <= 1:
                 continue
                 
@@ -167,13 +179,12 @@ class MinesweeperGame:
                 self.grid[r][c].is_mine = True
                 placed += 1
                 
-        # Calculate neighbors
-        for r in range(ROWS):
-            for c in range(COLS):
+        for r in range(self.rows):
+            for c in range(self.cols):
                 if not self.grid[r][c].is_mine:
                     self.grid[r][c].neighbor_mines = sum(
                         1 for dr in [-1, 0, 1] for dc in [-1, 0, 1]
-                        if 0 <= r + dr < ROWS and 0 <= c + dc < COLS
+                        if 0 <= r + dr < self.rows and 0 <= c + dc < self.cols
                         and self.grid[r + dr][c + dc].is_mine
                     )
 
@@ -185,13 +196,11 @@ class MinesweeperGame:
         
         if self.grid[r][c].is_mine:
             self.game_over = True
-            # Reveal all mines
             for row in self.grid:
                 for cell in row:
                     if cell.is_mine:
                         cell.revealed = True
             
-            # Massive explosion sparks!
             cell_x = self.grid[r][c].x + GRID_SIZE // 2
             cell_y = self.grid[r][c].y + GRID_SIZE // 2
             for _ in range(40):
@@ -203,23 +212,20 @@ class MinesweeperGame:
 
         self.cells_to_reveal -= 1
         
-        # Soft uncover sparks
         cell_x = self.grid[r][c].x + GRID_SIZE // 2
         cell_y = self.grid[r][c].y + GRID_SIZE // 2
         for _ in range(3):
             self.particles.append(MineSparkle(cell_x, cell_y, NEON_BLUE))
             
-        # Recursive uncover if empty cell
         if self.grid[r][c].neighbor_mines == 0:
             for dr in [-1, 0, 1]:
                 for dc in [-1, 0, 1]:
                     nr, nc = r + dr, c + dc
-                    if 0 <= nr < ROWS and 0 <= nc < COLS:
+                    if 0 <= nr < self.rows and 0 <= nc < self.cols:
                         self.reveal(nr, nc)
 
         if self.cells_to_reveal == 0 and not self.game_over:
             self.victory = True
-            # Flag remaining mines automatically
             for row in self.grid:
                 for cell in row:
                     if cell.is_mine:
@@ -233,16 +239,14 @@ class MinesweeperGame:
         self.grid[r][c].flagged = not self.grid[r][c].flagged
         self.mines_left += -1 if self.grid[r][c].flagged else 1
         
-        # Spark particles
         cell_x = self.grid[r][c].x + GRID_SIZE // 2
         cell_y = self.grid[r][c].y + GRID_SIZE // 2
         for _ in range(5):
             self.particles.append(MineSparkle(cell_x, cell_y, ORANGE))
 
     def handle_click(self, pos, right_click=False):
-        # Determine cell clicked
-        for r in range(ROWS):
-            for c in range(COLS):
+        for r in range(self.rows):
+            for c in range(self.cols):
                 cell = self.grid[r][c]
                 if pygame.Rect(cell.x, cell.y, GRID_SIZE, GRID_SIZE).collidepoint(pos):
                     if right_click:
@@ -255,7 +259,6 @@ class MinesweeperGame:
                     break
 
     def draw_hud(self, surface):
-        # Draw glass HUD panel
         hud_rect = pygame.Rect(0, 0, WIDTH, HUD_HEIGHT)
         pygame.draw.rect(surface, HUD_BG, hud_rect)
         pygame.draw.line(surface, NEON_BLUE, (0, HUD_HEIGHT - 2), (WIDTH, HUD_HEIGHT - 2), 3)
@@ -265,6 +268,10 @@ class MinesweeperGame:
         mines_val = FONT_LARGE.render(f"{max(0, self.mines_left):02d}", True, WHITE)
         surface.blit(mines_lbl, (40, 25))
         surface.blit(mines_val, (40, 50))
+
+        # Draw level stage text
+        level_lbl = FONT_HUD.render(f"STAGE {self.level}/20", True, GOLD)
+        surface.blit(level_lbl, (WIDTH // 2 - level_lbl.get_width() // 2, 45))
 
         # Draw Cells Left to Uncover
         cells_lbl = FONT_HUD.render("SECURE GRID LEFT", True, NEON_BLUE)
@@ -276,7 +283,13 @@ class MinesweeperGame:
 async def main():
     run = True
     clock = pygame.time.Clock()
-    game = MinesweeperGame()
+    
+    level = 1
+    max_levels = 20
+    game_won = False
+    
+    game = MinesweeperGame(level)
+    score = 0
     score_submitted = False
     
     game_surface = pygame.Surface((WIDTH, HEIGHT))
@@ -299,7 +312,10 @@ async def main():
             if event.type == pygame.KEYDOWN:
                 if game.game_over or game.victory:
                     if event.key == pygame.K_r:
-                        game = MinesweeperGame()
+                        level = 1
+                        game_won = False
+                        game = MinesweeperGame(level)
+                        score = 0
                         score_submitted = False
                         
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -309,13 +325,51 @@ async def main():
                     elif event.button == 3: # Right Click
                         game.handle_click(pygame.mouse.get_pos(), True)
 
-        # Submit score once on terminal state
-        if (game.game_over or game.victory) and not score_submitted:
+        # Check stage victory
+        if game.victory and not game.game_over:
+            if level >= max_levels:
+                game_won = True
+                if not score_submitted:
+                    score_submitted = True
+                    if arcade_api:
+                        final_score = score + 5000
+                        arcade_api.submit_score("Neon Minesweeper", final_score)
+            else:
+                # Level transition
+                overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+                pygame.draw.rect(overlay, (5, 5, 12, 215), (0, 0, WIDTH, HEIGHT))
+                game_surface.fill(DARK_BG)
+                for p in game.particles:
+                    p.draw(game_surface)
+                game_surface.blit(overlay, (0, 0))
+
+                card_rect = pygame.Rect(WIDTH // 4, HEIGHT // 3, WIDTH // 2, HEIGHT // 3)
+                pygame.draw.rect(game_surface, (15, 15, 30), card_rect, border_radius=15)
+                pygame.draw.rect(game_surface, NEON_GREEN, card_rect, 3, border_radius=15)
+
+                title_str = f"STAGE {level} CLEARED!"
+                over_title = FONT_LARGE.render(title_str, True, NEON_GREEN)
+                sub_lbl = FONT_HUD.render("NEXT GRID SECTOR INITIALIZING...", True, WHITE)
+
+                game_surface.blit(over_title, (WIDTH // 2 - over_title.get_width() // 2, HEIGHT // 3 + 45))
+                game_surface.blit(sub_lbl, (WIDTH // 2 - sub_lbl.get_width() // 2, HEIGHT // 3 + 115))
+
+                WIN.fill((0, 0, 0))
+                WIN.blit(game_surface, (0, 0))
+                pygame.display.update()
+
+                await asyncio.sleep(2.5)
+                score += (game.rows * game.cols - game.num_mines) * 10
+                level += 1
+                game = MinesweeperGame(level)
+                continue
+
+        # Submit score once on terminal game over
+        if game.game_over and not score_submitted:
             score_submitted = True
             if arcade_api:
-                # Score: cells revealed * 100 bonus for victory
-                cells_revealed = (ROWS * COLS - NUM_MINES) - game.cells_to_reveal
-                final_score = cells_revealed * 10 + (500 if game.victory else 0)
+                cells_revealed = (game.rows * game.cols - game.num_mines) - game.cells_to_reveal
+                final_score = score + cells_revealed * 10
                 arcade_api.submit_score("Neon Minesweeper", final_score)
 
         # Draw
@@ -333,8 +387,8 @@ async def main():
         # Draw HUD
         game.draw_hud(game_surface)
 
-        # Draw Game Over or Victory Banner
-        if game.game_over or game.victory:
+        # Draw Game Over or Grand Victory Banner
+        if game.game_over or game_won:
             overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
             pygame.draw.rect(overlay, (5, 5, 12, 215), (0, 0, WIDTH, HEIGHT))
             game_surface.blit(overlay, (0, 0))
@@ -345,7 +399,7 @@ async def main():
             banner_color = NEON_PINK if game.game_over else NEON_GREEN
             pygame.draw.rect(game_surface, banner_color, over_rect, 3, border_radius=15)
 
-            title_str = "CORE BREACH" if game.game_over else "GRID CLEANSE"
+            title_str = "CORE BREACH" if game.game_over else "DETECTOR SUPREME"
             over_title = FONT_LARGE.render(title_str, True, banner_color)
             restart_hint = FONT_HUD.render("PRESS 'R' TO REBOOT DETECTOR", True, NEON_BLUE)
 

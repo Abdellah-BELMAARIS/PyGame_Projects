@@ -47,15 +47,39 @@ except:
 
 FPS = 60
 
-# Procedural terrain vertices: list of (x, y)
-# Index 3 (250 to 350) and Index 7 (550 to 650) are flat landing pads!
-TERRAIN_POINTS = [
-    (0, 560), (100, 520), (200, 540), 
-    (240, 490), (340, 490), # PAD 1 (Flat, y = 490)
-    (400, 530), (490, 550), 
-    (540, 460), (640, 460), # PAD 2 (Flat, y = 460)
-    (700, 510), (800, 560)
-]
+TERRAIN_POINTS = []
+PADS = []
+
+def generate_terrain(level):
+    global TERRAIN_POINTS, PADS
+    random.seed(level * 456)
+    pad_width = max(45, 110 - (level - 1) * 3.4)
+    
+    p1_x = random.randint(100, 300)
+    p1_y = random.randint(450, 530)
+    
+    p2_x = random.randint(450, 650)
+    p2_y = random.randint(430, 520)
+    
+    PADS = [
+        (p1_x, p1_x + pad_width, p1_y),
+        (p2_x, p2_x + pad_width, p2_y)
+    ]
+    
+    TERRAIN_POINTS = [
+        (0, random.randint(520, 570)),
+        (p1_x - 50, random.randint(480, 550)),
+        (p1_x, p1_y),
+        (p1_x + pad_width, p1_y),
+        (p1_x + pad_width + 40, random.randint(500, 560)),
+        (p2_x - 40, random.randint(480, 540)),
+        (p2_x, p2_y),
+        (p2_x + pad_width, p2_y),
+        (p2_x + pad_width + 50, random.randint(500, 560)),
+        (800, random.randint(530, 570))
+    ]
+
+generate_terrain(1)
 
 
 class ExhaustParticle:
@@ -100,15 +124,16 @@ class LandingSparkle:
 
 
 class LunarLander:
-    def __init__(self):
+    def __init__(self, level=1):
         self.x = 100
         self.y = 100
         self.vx = 1.8
         self.vy = 0.0
         self.angle = 0.0 # Degrees
         self.fuel = 1000
-        self.gravity = 0.04
-        self.thrust_accel = 0.11
+        # Gravity scales slightly with level
+        self.gravity = 0.04 + (level - 1) * 0.003
+        self.thrust_accel = 0.11 + (level - 1) * 0.005
         self.width = 30
         self.height = 30
         self.alive = True
@@ -195,11 +220,9 @@ def get_terrain_height(x):
 
 
 def check_on_pad(x):
-    # Returns True if x is inside Pad 1 (240 to 340) or Pad 2 (540 to 640)
-    if 240 <= x <= 340:
-        return True
-    if 540 <= x <= 640:
-        return True
+    for x1, x2, y in PADS:
+        if x1 <= x <= x2:
+            return True
     return False
 
 
@@ -207,7 +230,11 @@ async def main():
     run = True
     clock = pygame.time.Clock()
 
-    lander = LunarLander()
+    level = 1
+    max_levels = 20
+    game_won = False
+    
+    lander = LunarLander(level)
     particles = []
     
     status_message = "PILOT THE LANDER TO A CYAN PAD"
@@ -239,7 +266,10 @@ async def main():
                 if game_over or lander.landed:
                     if event.key == pygame.K_r:
                         # Reset game
-                        lander = LunarLander()
+                        level = 1
+                        game_won = False
+                        generate_terrain(level)
+                        lander = LunarLander(level)
                         status_message = "PILOT THE LANDER TO A CYAN PAD"
                         status_color = NEON_BLUE
                         game_over = False
@@ -329,7 +359,11 @@ async def main():
             
             # Draw segment
             # If segment is flat and matches a pad, draw in glowing cyan, else green
-            is_pad = p1[1] == p2[1] and (p1[0] == 240 or p1[0] == 540)
+            is_pad = False
+            for x1, x2, y in PADS:
+                if abs(p1[0] - x1) < 2 and abs(p2[0] - x2) < 2 and abs(p1[1] - y) < 2:
+                    is_pad = True
+                    break
             color = NEON_CYAN if is_pad else NEON_GREEN
             pygame.draw.line(game_surface, color, p1, p2, 3)
             
@@ -377,10 +411,61 @@ async def main():
             if arcade_api:
                 # 500 bonus points for landing successfully + remaining fuel
                 final_score = (500 + int(lander.fuel)) if lander.landed else 0
+                if game_won:
+                    final_score += 5000
                 arcade_api.submit_score("Neon Lander", final_score)
+                
+        # Draw level stage text
+        level_lbl = FONT_HUD.render(f"STAGE {level}/20", True, GOLD)
+        game_surface.blit(level_lbl, (WIDTH // 2 - level_lbl.get_width() // 2, 75))
 
-        # Game Over Banner
-        if game_over or lander.landed:
+        # Game Over Banner or Level Clear
+        if lander.landed and not game_over:
+            if level >= max_levels:
+                overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+                pygame.draw.rect(overlay, (5, 5, 12, 210), (0, 0, WIDTH, HEIGHT))
+                game_surface.blit(overlay, (0, 0))
+
+                over_rect = pygame.Rect(WIDTH // 4, HEIGHT // 3, WIDTH // 2, HEIGHT // 3)
+                pygame.draw.rect(game_surface, (15, 15, 30), over_rect, border_radius=15)
+                pygame.draw.rect(game_surface, NEON_GREEN, over_rect, 3, border_radius=15)
+
+                over_title = FONT_LARGE.render("MISSION SUCCESS!", True, NEON_GREEN)
+                restart_hint = FONT_HUD.render("PRESS 'R' TO RESTART ARCADE CORE", True, NEON_BLUE)
+
+                game_surface.blit(over_title, (WIDTH // 2 - over_title.get_width() // 2, HEIGHT // 3 + 45))
+                game_surface.blit(restart_hint, (WIDTH // 2 - restart_hint.get_width() // 2, HEIGHT // 3 + 125))
+            else:
+                # Proceed to next level transition
+                overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+                pygame.draw.rect(overlay, (5, 5, 12, 210), (0, 0, WIDTH, HEIGHT))
+                game_surface.blit(overlay, (0, 0))
+
+                card_rect = pygame.Rect(WIDTH // 4, HEIGHT // 3, WIDTH // 2, HEIGHT // 3)
+                pygame.draw.rect(game_surface, (15, 15, 30), card_rect, border_radius=15)
+                pygame.draw.rect(game_surface, NEON_GREEN, card_rect, 3, border_radius=15)
+
+                title = FONT_LARGE.render(f"STAGE {level} CLEARED", True, NEON_GREEN)
+                sub = FONT_HUD.render("REFUELING AND SCANNING NEXT SECTOR...", True, WHITE)
+
+                game_surface.blit(title, (WIDTH // 2 - title.get_width() // 2, HEIGHT // 3 + 35))
+                game_surface.blit(sub, (WIDTH // 2 - sub.get_width() // 2, HEIGHT // 3 + 105))
+
+                WIN.fill((0, 0, 0))
+                WIN.blit(game_surface, (0, 0))
+                pygame.display.update()
+
+                await asyncio.sleep(2.0)
+                level += 1
+                generate_terrain(level)
+                lander = LunarLander(level)
+                status_message = "PILOT THE LANDER TO A CYAN PAD"
+                status_color = NEON_BLUE
+                particles.clear()
+                score_submitted = False
+                continue
+                
+        elif game_over:
             overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
             pygame.draw.rect(overlay, (5, 5, 12, 210), (0, 0, WIDTH, HEIGHT))
             game_surface.blit(overlay, (0, 0))
@@ -389,8 +474,7 @@ async def main():
             pygame.draw.rect(game_surface, (15, 15, 30), over_rect, border_radius=15)
             pygame.draw.rect(game_surface, status_color, over_rect, 3, border_radius=15)
 
-            title_str = "HULL BREACHED" if game_over else "TOUCHDOWN!"
-            over_title = FONT_LARGE.render(title_str, True, status_color)
+            over_title = FONT_LARGE.render("HULL BREACHED", True, status_color)
             restart_hint = FONT_HUD.render("PRESS 'R' TO RESTART CORE", True, NEON_BLUE)
 
             game_surface.blit(over_title, (WIDTH // 2 - over_title.get_width() // 2, HEIGHT // 3 + 45))

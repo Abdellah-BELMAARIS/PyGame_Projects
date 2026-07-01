@@ -330,11 +330,11 @@ export const VirtualGamepad: React.FC<VirtualGamepadProps> = ({
   // Asteroids / Lander: Left, Right, Up (Thrust) + Action A (Space)
   const isAsteroidsOrLander = normalizedDir === 'asteroids' || normalizedDir === 'lander';
   // Space Invader / Breakout / Platformer: Left, Right + Action A (Space)
-  const isHorizontalShooterOrPlatformer = normalizedDir === 'space_invader' || normalizedDir === 'breakout' || normalizedDir === 'platformer';
+  const isHorizontalShooterOrPlatformer = normalizedDir === 'space_invader' || normalizedDir === 'breakout' || normalizedDir === 'platformer' || normalizedDir === 'level_devil';
   // Full D-pad: Snake, Car Racing, 2048, Pacman
   const isFullDPad = normalizedDir === 'snake' || normalizedDir === 'car_racing' || normalizedDir === '2048' || normalizedDir === 'pacman';
 
-  const needsActionA = isAsteroidsOrLander || isHorizontalShooterOrPlatformer || normalizedDir === 'space_invader' || normalizedDir === 'breakout' || normalizedDir === 'platformer';
+  const needsActionA = isAsteroidsOrLander || isHorizontalShooterOrPlatformer || normalizedDir === 'space_invader' || normalizedDir === 'breakout' || normalizedDir === 'platformer' || normalizedDir === 'level_devil';
 
   return (
     <div className="w-full flex justify-between items-center px-6 py-4 select-none touch-none">
@@ -353,7 +353,7 @@ export const VirtualGamepad: React.FC<VirtualGamepadProps> = ({
             {...buttonProps('Space')}
             className="w-20 h-20 rounded-full bg-gradient-arcade border border-white/20 flex items-center justify-center font-black text-white text-lg active:scale-90 active:brightness-110 transition-all outline-none shadow-arcade"
           >
-            {normalizedDir === 'platformer' ? 'JUMP' : normalizedDir === 'space_invader' || normalizedDir === 'breakout' || normalizedDir === 'asteroids' ? 'FIRE' : 'THRUST'}
+            {normalizedDir === 'platformer' || normalizedDir === 'level_devil' ? 'JUMP' : normalizedDir === 'space_invader' || normalizedDir === 'breakout' || normalizedDir === 'asteroids' ? 'FIRE' : 'THRUST'}
           </button>
           <span className="text-[9px] text-gray-500 font-bold uppercase">Space</span>
         </div>
